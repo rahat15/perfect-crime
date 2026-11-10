@@ -366,7 +366,7 @@ class Experiment:
         return any(predicate(event) for event in events)
 
     def check_size(self):
-        artifact_limit = 512 * 1024 * 1024 if self.args.client == 'muse' else MAX_ARTIFACT_BYTES
+        artifact_limit = 512 * 1024 * 1024 if getattr(self.args, 'client', 'claude') == 'muse' else MAX_ARTIFACT_BYTES
         if sum(path.stat().st_size for path in self.directory.iterdir() if path.is_file()) > artifact_limit:
             raise RuntimeError("Artifact size limit reached; observation is incomplete")
 
