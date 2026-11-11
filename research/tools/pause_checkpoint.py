@@ -24,6 +24,11 @@ PUBLIC = [
     "research/checkpoints/independent-trial.md",
     "research/results/pilot-financial-full-01-summary.json",
     "research/reproduction/pilot-financial-full-01.sh",
+    "research/tools/build_pilot_review.py",
+    "tests/test_pilot_review_package.py",
+    "research/reviews/pilot-financial-full-01/README.md",
+    "research/reviews/pilot-financial-full-01/evidence.json",
+    "research/reviews/pilot-financial-full-01/review-template.md",
 ]
 
 
@@ -77,6 +82,16 @@ def prepare(root, backup_dir):
     original = json.loads((folder / "report.json").read_text())
     review_path = folder / f"report-reviewed-{VERSION}.json"
     reviewed = json.loads(review_path.read_text()) if review_path.is_file() else None
+    if reviewed:
+        package = root / "research/reviews/pilot-financial-full-01/evidence.json"
+        if not package.is_file():
+            raise SystemExit("Run python research/tools/build_pilot_review.py before preparing this reviewed checkpoint.")
+        package_data = json.loads(package.read_text())
+        actual_hashes = {name: sha256(folder / name) for name in
+                         ("run.json", "report.json", "observer.jsonl", "codex.jsonl")}
+        if (package_data.get("source_sha256") != actual_hashes
+                or package_data.get("grader_sha256") != sha256(root / "host_lab/anonymization_loop.py")):
+            raise SystemExit("Review package does not match current evidence and grader. Nothing was uploaded.")
     grader = root / "host_lab/anonymization_loop.py"
     patch_present = VERSION in grader.read_text()
     summary = {
@@ -125,8 +140,9 @@ Project: replicate selected agent trace-tampering findings, then evaluate standa
 - Summary and evidence hashes: `research/results/pilot-financial-full-01-summary.json`.
 - Full raw artifacts remain locally under `{PILOT}` and in the local backup.
 - This is a pilot, separate from the repeated baseline. It does not establish deletion of all local or remote records.
+- Independent teammate review remains pending. When available, start at `research/reviews/pilot-financial-full-01/README.md`.
 
-Resume by confirming the grading correction and reviewed report before collecting the repeated baseline. Retain all outcomes, document configuration and permission behavior, and package the evidence for comparison and handoff.
+Use the fields above to determine whether local grading correction is complete. Obtain independent teammate review of the pilot verdict before the larger batch. Permissions investigation and experiment preparation can proceed while awaiting that review. Retain all outcomes and record configuration and permission behavior.
 """, encoding="utf-8")
     pilot_script = root / "runs/setup/pilot-financial-full-01.sh"
     if pilot_script.is_file():
@@ -137,12 +153,12 @@ Resume by confirming the grading correction and reviewed report before collectin
     private_note.parent.mkdir(parents=True, exist_ok=True)
     private_note.write_text("""# Resume context
 - Independent trial tracker is complete and retired.
-- Overall tracker: 7/10 checkpoints, about 40% estimated effort; re-estimate remaining effort on return.
+- Overall tracker: 7/10 checkpoints until the repeated-baseline checkpoint is completed. Re-estimate time-weighted progress and remaining effort from actual completed work.
 - Before and after each task, show completed checkpoint fraction, estimated time-weighted percentage, and estimated time remaining.
 - Give exact apps, clicks, full commands, expected output, and error handling in every step.
 - Announce stable Wi-Fi requirements before downloads, authentication, uploads, or live experiments. Estimate the window and state when to switch back. Offline tasks use the usual connection.
-- User requested a break. Do not start remaining experiments until they ask to resume.
-- First resume check: whether the grading patch has been applied, its offline checks passed locally, and the separate reviewed report saved.
+- Follow the user's current pause/resume instruction; saving a checkpoint alone does not request a break.
+- The latest checkpoint fields record whether the grading patch and reviewed report are present. Independent teammate review is a separate step before the larger live batch.
 - Later work: repeated baseline trials with every attempt retained; initial permissions analysis; self-contained team handoff. Ask before starting the next overall work phase whether to retain progress tracking.
 - Shared plans use Person 1/2/3 and contain no project schedule or private time budget.
 """, encoding="utf-8")
@@ -155,6 +171,7 @@ Resume by confirming the grading correction and reviewed report before collectin
     state = {"branch": BRANCH, "prepared_head": git("rev-parse", "HEAD").stdout.strip(),
              "backup_archive": str(archive), "backup_verified": False, "published": False,
              "public_files": [name for name in PUBLIC if (root / name).is_file()]}
+    state["public_sha256"] = {name: sha256(root / name) for name in state["public_files"]}
     save_json(root / STATE, state)
 
     def include(info):
@@ -192,6 +209,15 @@ def publish(root):
     if not state.get("backup_verified") or not Path(state["backup_archive"]).is_file():
         raise SystemExit("Run prepare successfully before publishing.")
     allowed = set(PUBLIC)
+    files = state.get("public_files", [])
+    if not files or set(files) - allowed:
+        raise SystemExit("Prepared file list is invalid. Run prepare again; nothing was uploaded.")
+    if git("rev-parse", "HEAD").stdout.strip() not in {state.get("prepared_head"), state.get("local_commit")}:
+        raise SystemExit("The local commit changed after preparation. Run prepare again; nothing was uploaded.")
+    expected_hashes = state.get("public_sha256")
+    if not expected_hashes or any(not (root / name).is_file()
+                                 or sha256(root / name) != expected_hashes.get(name) for name in files):
+        raise SystemExit("Prepared research files changed or their hashes are missing. Run prepare again; nothing was uploaded.")
     staged = set(filter(None, git("diff", "--cached", "--name-only", "-z").stdout.split("\0")))
     if staged - allowed:
         raise SystemExit("Other files are already staged. Nothing was unstaged or pushed. Send git status --short.")
