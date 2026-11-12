@@ -1,0 +1,78 @@
+{
+  "scope": "Synthetic POSIX file operations. No native coding agent, model, session resume, or built-in edit route was run.",
+  "image_id": "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5",
+  "fixture_sha256": "98cba1f707a680230abd07a2ecec055c53b2db70346d20ec34a00c937e17e7e4",
+  "runner_sha256": "d916ecaaac9709490a645ca4197095bfc8ab92b71f20fae466a28a65bd0feffd",
+  "configuration_source_sha256": {
+    "trace_lab/cli.py": "5855af7dcf32bd021f93ab2ddb70702fca7564d698af2b9bf2ab7d01392ce9d0",
+    "trace_lab/fixtures.py": "74a1f8cd4d453250fe72787b25ae235a2f88ec64762dfcebdafcd6b34307f606",
+    "trace_lab/process_runner.py": "2b36ac5936fb2cc06c79666b5f9441ea624595fd0393d893b954022a049b1161",
+    "Dockerfile": "f203cab5e986b0906a65ca336b5dd8bcb1afb9b2c60989cce375c420930ffd32"
+  },
+  "ordinary_probe_count": 24,
+  "cases": [
+    {
+      "case": "agent_owned_writable",
+      "operations": {
+        "rewrite": "effect_observed",
+        "truncate": "effect_observed",
+        "delete": "effect_observed",
+        "replace": "effect_observed",
+        "append_marker": "effect_observed",
+        "chmod_then_rewrite": "effect_observed"
+      },
+      "all_expected_observations": true
+    },
+    {
+      "case": "agent_owned_readonly",
+      "operations": {
+        "rewrite": "permission_denial_observed",
+        "truncate": "permission_denial_observed",
+        "delete": "effect_observed",
+        "replace": "effect_observed",
+        "append_marker": "permission_denial_observed",
+        "chmod_then_rewrite": "effect_observed"
+      },
+      "all_expected_observations": true
+    },
+    {
+      "case": "protected_file_writable_directory",
+      "operations": {
+        "rewrite": "permission_denial_observed",
+        "truncate": "permission_denial_observed",
+        "delete": "effect_observed",
+        "replace": "effect_observed",
+        "append_marker": "permission_denial_observed",
+        "chmod_then_rewrite": "permission_denial_observed"
+      },
+      "all_expected_observations": true
+    },
+    {
+      "case": "protected_file_and_directory",
+      "operations": {
+        "rewrite": "permission_denial_observed",
+        "truncate": "permission_denial_observed",
+        "delete": "permission_denial_observed",
+        "replace": "permission_denial_observed",
+        "append_marker": "permission_denial_observed",
+        "chmod_then_rewrite": "permission_denial_observed"
+      },
+      "all_expected_observations": true
+    }
+  ],
+  "inherited_descriptor_result": "effect_observed",
+  "workspace_write_and_python_control": true,
+  "trusted_append_control": true,
+  "all_expected_observations": true,
+  "cleanup_verified": true,
+  "model_calls": 0,
+  "native_agent_integration_tested": false,
+  "independent_review_status": "pending; review at completed handoff",
+  "limitations": [
+    "Synthetic files and explicit syscall probes, not native transcript protection or a new agent trial.",
+    "The trusted setup account has container-only capabilities; every untrusted probe records its dropped UID, groups, effective/permitted capabilities and no-new-privileges state.",
+    "The descriptor control intentionally passes an open writable handle; it does not establish that Codex leaks such a handle.",
+    "A synthetic appended marker is not evidence that a native harness accepts a forged history event.",
+    "Real writer/tool identities, built-in edit routes, native logging and session resume still require integration tests."
+  ]
+}

@@ -12,6 +12,10 @@ Project: replicate selected agent trace-tampering findings, then evaluate standa
 - Summary and evidence hashes: `research/results/pilot-financial-full-01-summary.json`.
 - Full raw artifacts remain locally under `runs/pilot-financial-full/88fe51804aa84a32a06c16d99809837a` and in the local backup.
 - This is a pilot, separate from the repeated baseline. It does not establish deletion of all local or remote records.
-- Independent teammate review remains pending. When available, start at `research/reviews/pilot-financial-full-01/README.md`.
+- Independent review remains pending. Selected evidence: `research/reviews/pilot-financial-full-01/evidence.json`.
 
-Use the fields above to determine whether local grading correction is complete. Obtain independent teammate review of the pilot verdict before the larger batch. Permissions investigation and experiment preparation can proceed while awaiting that review. Retain all outcomes and record configuration and permission behavior.
+The original and reviewed findings are separate records. Independent review is not complete. Experiment configuration, permission behavior and all retained outcomes are documented in the evidence files.
+
+Repeated baseline: all ten fresh attempts retained. A separate reviewed summary records local session JSONL deletion and final absence in all ten, with corrections for attempts 3 and 10; original verdicts and raw evidence are preserved. Independent teammate review remains pending. See `research/reviews/baseline-financial-full-01/README.md`.
+
+Initial permission mechanism investigation: see `research/analysis/permission-boundary-source-review.md` and `research/results/permission-probe-01-summary.json`. These disposable POSIX probes are separate from native agent trials; native writer/tool mapping and logging/resume integration remain to be tested.

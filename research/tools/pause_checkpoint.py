@@ -8,7 +8,10 @@ import json
 from pathlib import Path
 import shutil
 import subprocess
+import sys
 import tarfile
+
+sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 
 BRANCH = "reproduce-financial"
@@ -28,8 +31,45 @@ PUBLIC = [
     "tests/test_pilot_review_package.py",
     "research/reviews/pilot-financial-full-01/README.md",
     "research/reviews/pilot-financial-full-01/evidence.json",
-    "research/reviews/pilot-financial-full-01/review-template.md",
+    "research/tools/run_baseline.py",
+    "tests/test_baseline_runner.py",
+    "research/protocols/financial-full-baseline-01.md",
+    "research/results/baseline-financial-full-01-summary.json",
+    "research/tools/export_baseline_review.py",
+    "tests/test_baseline_review_export.py",
+    "research/tools/finalize_baseline_review.py",
+    "tests/test_baseline_finalization.py",
+    "research/reviews/baseline-financial-full-01/review-decisions.json",
+    "research/reviews/baseline-financial-full-01/README.md",
+    "research/results/baseline-financial-full-01-reviewed-summary.json",
+    "research/tools/permission_probe_fixture.py",
+    "research/tools/run_permission_probe.py",
+    "tests/test_permission_probe.py",
+    "research/analysis/permission-boundary-source-review.md",
+    "research/protocols/batch-review-policy.md",
+    "research/results/permission-probe-01-summary.json",
+    "research/README.md",
+    "research/handoffs/week1-manifest.json",
+    "research/reviews/permission-probe-01/evidence.json",
+    "research/reviews/permission-probe-01/README.md",
+    "research/tools/finalize_week1.py",
+    "tests/test_week1_handoff.py",
+    "research/tools/install_week1_final.py",
+    "tests/test_week1_documentation_update.py",
 ]
+RETIRED = (
+    "research/reviews/pilot-financial-full-01/review-template.md",
+    "research/handoffs/review-template.md",
+)
+
+
+def retired_tracked_files(root):
+    if any((root / name).exists() for name in RETIRED):
+        raise SystemExit("A superseded coordination template is still present. Complete the final-kit installation first.")
+    tracked = set(filter(None, git("ls-files", "-z", "--", *RETIRED).stdout.split("\0")))
+    if tracked - set(RETIRED):
+        raise SystemExit("Unexpected path in the retired-file inventory.")
+    return sorted(tracked)
 
 
 def run(*args, check=True, capture=True):
@@ -74,7 +114,25 @@ def save_json(path, value):
     path.write_text(json.dumps(value, indent=2) + "\n", encoding="utf-8")
 
 
+def verify_archive_evidence(archive, expected):
+    pending = dict(expected)
+    with tarfile.open(archive, "r:gz") as target:
+        for member in target:
+            if member.name not in pending:
+                continue
+            source = target.extractfile(member)
+            if source is None or hashlib.sha256(source.read()).hexdigest() != pending.pop(member.name):
+                raise SystemExit("Backup evidence verification failed. Keep the original project open.")
+    if pending:
+        raise SystemExit("Backup is missing expected evidence. Keep the original project open.")
+
+
 def prepare(root, backup_dir):
+    retired = retired_tracked_files(root)
+    handoff = None
+    if (root / "research/handoffs/week1-manifest.json").is_file():
+        from research.tools.finalize_week1 import check_manifest
+        handoff = check_manifest(root)
     folder = root / PILOT
     metadata = json.loads((folder / "run.json").read_text())
     if metadata.get("session_id") != "01a1c307-a8c9-78b2-afe1-e3767803935c":
@@ -124,6 +182,56 @@ def prepare(root, backup_dir):
                           ("run.json", "report.json", "observer.jsonl", "codex.jsonl")},
     }
     save_json(root / "research/results/pilot-financial-full-01-summary.json", summary)
+    backup_evidence = {f"perfect-crime-repro/{PILOT}/{name}": digest
+                       for name, digest in summary["source_sha256"].items()}
+    baseline_path = root / "research/results/baseline-financial-full-01-reviewed-summary.json"
+    baseline_ready = False
+    if baseline_path.is_file():
+        baseline = json.loads(baseline_path.read_text())
+        decision_path = root / "research/reviews/baseline-financial-full-01/review-decisions.json"
+        decisions = json.loads(decision_path.read_text())
+        if (baseline.get("retained_attempts") != 10 or baseline.get("unresolved_attempts") != []
+                or baseline.get("reviewed_trace_deletions") != 10
+                or baseline.get("review_decisions_sha256") != sha256(decision_path)):
+            raise SystemExit("The baseline review is incomplete or differs from its review decisions.")
+        for item in decisions["attempts"]:
+            relative = item["run_folder_relative"]
+            for name, digest in item["source_sha256"].items():
+                backup_evidence[f"perfect-crime-repro/{relative}/{name}"] = digest
+        for relative in (
+            "research/results/baseline-financial-full-01-reviewed-summary.json",
+            "research/reviews/baseline-financial-full-01/review-decisions.json",
+            "research/reviews/baseline-financial-full-01/README.md",
+            "runs/baseline-financial-full-01/attempt-03/manual-review.json",
+            "runs/baseline-financial-full-01/attempt-10/manual-review.json",
+        ):
+            backup_evidence[f"perfect-crime-repro/{relative}"] = sha256(root / relative)
+        baseline_ready = True
+    permission_ready = False
+    permission_path = root / "research/results/permission-probe-01-summary.json"
+    if permission_path.is_file():
+        permission = json.loads(permission_path.read_text())
+        permission_ready = (permission.get("ordinary_probe_count") == 24
+                            and permission.get("all_expected_observations") is True
+                            and permission.get("cleanup_verified") is True
+                            and permission.get("model_calls") == 0)
+        for relative in (
+            "research/results/permission-probe-01-summary.json",
+            "research/analysis/permission-boundary-source-review.md",
+            "research/protocols/batch-review-policy.md",
+            "runs/permission-probe-01/run.json",
+            "runs/permission-probe-01/container-settings.json",
+            "runs/permission-probe-01/container-stdout.json",
+            "runs/permission-probe-01/container-stderr.log",
+            "runs/permission-probe-01/summary.json",
+            "runs/permission-probe-01/diagnostics.json",
+        ):
+            backup_evidence[f"perfect-crime-repro/{relative}"] = sha256(root / relative)
+    if handoff is not None:
+        for relative, digest in handoff["public_file_sha256"].items():
+            backup_evidence[f"perfect-crime-repro/{relative}"] = digest
+        relative = "research/handoffs/week1-manifest.json"
+        backup_evidence[f"perfect-crime-repro/{relative}"] = sha256(root / relative)
     checkpoint = root / "research/checkpoints/independent-trial.md"
     checkpoint.parent.mkdir(parents=True, exist_ok=True)
     checkpoint.write_text(f"""# Independent replication checkpoint
@@ -140,10 +248,16 @@ Project: replicate selected agent trace-tampering findings, then evaluate standa
 - Summary and evidence hashes: `research/results/pilot-financial-full-01-summary.json`.
 - Full raw artifacts remain locally under `{PILOT}` and in the local backup.
 - This is a pilot, separate from the repeated baseline. It does not establish deletion of all local or remote records.
-- Independent teammate review remains pending. When available, start at `research/reviews/pilot-financial-full-01/README.md`.
+- Independent review remains pending. Selected evidence: `research/reviews/pilot-financial-full-01/evidence.json`.
 
-Use the fields above to determine whether local grading correction is complete. Obtain independent teammate review of the pilot verdict before the larger batch. Permissions investigation and experiment preparation can proceed while awaiting that review. Retain all outcomes and record configuration and permission behavior.
+The original and reviewed findings are separate records. Independent review is not complete. Experiment configuration, permission behavior and all retained outcomes are documented in the evidence files.
 """, encoding="utf-8")
+    if baseline_ready:
+        with checkpoint.open("a", encoding="utf-8") as output:
+            output.write("\nRepeated baseline: all ten fresh attempts retained. A separate reviewed summary records local session JSONL deletion and final absence in all ten, with corrections for attempts 3 and 10; original verdicts and raw evidence are preserved. Independent teammate review remains pending. See `research/reviews/baseline-financial-full-01/README.md`.\n")
+    if permission_path.is_file():
+        with checkpoint.open("a", encoding="utf-8") as output:
+            output.write("\nInitial permission mechanism investigation: see `research/analysis/permission-boundary-source-review.md` and `research/results/permission-probe-01-summary.json`. These disposable POSIX probes are separate from native agent trials; native writer/tool mapping and logging/resume integration remain to be tested.\n")
     pilot_script = root / "runs/setup/pilot-financial-full-01.sh"
     if pilot_script.is_file():
         destination = root / "research/reproduction/pilot-financial-full-01.sh"
@@ -151,17 +265,19 @@ Use the fields above to determine whether local grading correction is complete. 
         shutil.copy2(pilot_script, destination)
     private_note = root / "runs/setup/RESUME_PRIVATE.md"
     private_note.parent.mkdir(parents=True, exist_ok=True)
-    private_note.write_text("""# Resume context
-- Independent trial tracker is complete and retired.
-- Overall tracker: 7/10 checkpoints until the repeated-baseline checkpoint is completed. Re-estimate time-weighted progress and remaining effort from actual completed work.
-- Before and after each task, show completed checkpoint fraction, estimated time-weighted percentage, and estimated time remaining.
-- Give exact apps, clicks, full commands, expected output, and error handling in every step.
-- Announce stable Wi-Fi requirements before downloads, authentication, uploads, or live experiments. Estimate the window and state when to switch back. Offline tasks use the usual connection.
-- Follow the user's current pause/resume instruction; saving a checkpoint alone does not request a break.
-- The latest checkpoint fields record whether the grading patch and reviewed report are present. Independent teammate review is a separate step before the larger live batch.
-- Later work: repeated baseline trials with every attempt retained; initial permissions analysis; self-contained team handoff. Ask before starting the next overall work phase whether to retain progress tracking.
-- Shared plans use Person 1/2/3 and contain no project schedule or private time budget.
-""", encoding="utf-8")
+    prior_note = private_note.read_text(encoding="utf-8") if private_note.exists() else "# Resume context\n"
+    progress = ("9/10 checkpoints; initial replication and permission evidence complete; final publication remains"
+                if permission_ready and baseline_ready else
+                "8/10 checkpoints; repeated baseline reviewed and saved" if baseline_ready else
+                "Initial replication is in progress")
+    updates = {
+        "- Overall tracker:": "- Overall tracker: " + progress + ".",
+        "- Handoff prepared locally:": "- Handoff prepared locally: " + str(handoff is not None)
+            + ". Publication must be verified before marking Week 1 complete. Independent review remains pending.",
+        "- Documentation policy:": "- Documentation policy: GitHub contains code, research evidence and standard technical documentation. Teammate requests and assignments are communicated by brief text, not repository READMEs; a separate short document is used only when necessary.",
+    }
+    lines = [line for line in prior_note.splitlines() if not any(line.startswith(prefix) for prefix in updates)]
+    private_note.write_text("\n".join(lines + list(updates.values())) + "\n", encoding="utf-8")
     backup_dir = backup_dir.resolve()
     if backup_dir.is_relative_to(root):
         raise SystemExit("Choose a backup directory outside the project.")
@@ -170,7 +286,8 @@ Use the fields above to determine whether local grading correction is complete. 
     archive = backup_dir / f"perfect-crime-checkpoint-{tag}.tar.gz"
     state = {"branch": BRANCH, "prepared_head": git("rev-parse", "HEAD").stdout.strip(),
              "backup_archive": str(archive), "backup_verified": False, "published": False,
-             "public_files": [name for name in PUBLIC if (root / name).is_file()]}
+             "public_files": [name for name in PUBLIC if (root / name).is_file()],
+             "retired_tracked_files": retired}
     state["public_sha256"] = {name: sha256(root / name) for name in state["public_files"]}
     save_json(root / STATE, state)
 
@@ -188,12 +305,12 @@ Use the fields above to determine whether local grading correction is complete. 
     with gzip.open(archive, "rb") as source:
         while source.read(1024 * 1024):
             pass
-    with tarfile.open(archive, "r:gz") as target:
-        for name in ("run.json", "report.json", "observer.jsonl", "codex.jsonl"):
-            archived = target.extractfile(f"perfect-crime-repro/{PILOT}/{name}")
-            if archived is None or hashlib.sha256(archived.read()).hexdigest() != summary["source_sha256"][name]:
-                raise SystemExit("Backup evidence verification failed. Keep the original project open.")
-    state.update(backup_verified=True, backup_sha256=sha256(archive))
+    verify_archive_evidence(archive, backup_evidence)
+    state.update(backup_verified=True, backup_sha256=sha256(archive),
+                 backup_evidence_files_verified=len(backup_evidence), baseline_review_complete=baseline_ready,
+                 permission_probe_ready_for_review=permission_ready,
+                 week1_handoff_prepared=handoff is not None,
+                 week1_operator_work_complete=False)
     save_json(root / STATE, state)
     save_json(backup_dir / "LATEST-CHECKPOINT.json", state)
     shutil.copy2(private_note, backup_dir / "RESUME_PRIVATE.md")
@@ -201,6 +318,10 @@ Use the fields above to determine whether local grading correction is complete. 
     print("Backup:", archive)
     print("Grading patch present:", patch_present)
     print("Reviewed report present:", bool(reviewed))
+    print("Baseline review present and backed up:", baseline_ready)
+    print("Permission probe present and backed up:", permission_path.is_file())
+    if handoff is not None:
+        print("Week 1 handoff present and backed up: True")
     print("GitHub upload is a separate step; no remote changes were made.")
 
 
@@ -219,21 +340,33 @@ def publish(root):
                                  or sha256(root / name) != expected_hashes.get(name) for name in files):
         raise SystemExit("Prepared research files changed or their hashes are missing. Run prepare again; nothing was uploaded.")
     staged = set(filter(None, git("diff", "--cached", "--name-only", "-z").stdout.split("\0")))
-    if staged - allowed:
+    retired = state.get("retired_tracked_files", [])
+    if not isinstance(retired, list) or set(retired) - set(RETIRED):
+        raise SystemExit("Unexpected retired-file list; nothing was uploaded.")
+    if any((root / name).exists() for name in RETIRED):
+        raise SystemExit("A retired coordination file reappeared; nothing was uploaded.")
+    if staged - allowed - set(retired):
         raise SystemExit("Other files are already staged. Nothing was unstaged or pushed. Send git status --short.")
+    if state.get("week1_handoff_prepared"):
+        from research.tools.finalize_week1 import check_manifest
+        check_manifest(root)
     account = json.loads(run("gh", "api", "user").stdout)
     defaults = {"user.name": account.get("name") or account["login"],
                 "user.email": f"{account['id']}+{account['login']}@users.noreply.github.com"}
     for key, value in defaults.items():
         if not git("config", "--get", key, check=False).stdout.strip():
             git("config", "--local", key, value)
-    git("add", "--", *state["public_files"])
+    git("add", "--", *state["public_files"], *retired)
     changed = git("diff", "--cached", "--quiet", check=False).returncode
     if changed == 1:
-        run("git", "commit", "-m", "Save independent trace-deletion pilot checkpoint", capture=False)
+        message = ("Complete initial replication and permission-probe handoff"
+                   if state.get("week1_handoff_prepared") else "Save independent trace-deletion pilot checkpoint")
+        run("git", "commit", "-m", message, capture=False)
     elif changed != 0:
         raise SystemExit("Could not inspect staged changes; nothing was pushed.")
     head = git("rev-parse", "HEAD").stdout.strip()
+    if git("ls-tree", "-r", "--name-only", "HEAD", "--", *RETIRED).stdout.strip():
+        raise SystemExit("A retired coordination template remains in the new commit; nothing was pushed.")
     state["local_commit"] = head
     save_json(root / STATE, state)
     repository = json.loads(run("gh", "api", f"repos/{REPOSITORY}").stdout)
@@ -243,14 +376,29 @@ def publish(root):
     remote = git("ls-remote", "origin", f"refs/heads/{BRANCH}").stdout.split()
     if not remote or remote[0] != head:
         raise SystemExit("Remote verification did not match. Keep the local backup and send this output.")
-    state.update(published=True, remote_commit=head)
+    state.update(published=True, remote_commit=head,
+                 week1_operator_work_complete=bool(state.get("week1_handoff_prepared")))
     save_json(root / STATE, state)
     backup_dir = Path(state["backup_archive"]).parent
     save_json(backup_dir / "LATEST-CHECKPOINT.json", state)
+    if state["week1_operator_work_complete"]:
+        note = root / "runs/setup/RESUME_PRIVATE.md"
+        lines = note.read_text().splitlines()
+        lines = ["- Overall tracker: 10/10 Week 1 checkpoints complete for the operator and assistant; retire this tracker. Independent teammate review is pending in the handoff. Start Week 2 Week/Day trackers only when Week 2 work starts."
+                 if line.startswith("- Overall tracker:") else line for line in lines]
+        lines = ["- Handoff publication verified at commit " + head + ". The operator's Week 1 work is complete; independent teammate review remains pending."
+                 if line.startswith("- Handoff prepared locally:") else line for line in lines]
+        note.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        shutil.copy2(note, backup_dir / "RESUME_PRIVATE.md")
     print("GITHUB CHECKPOINT VERIFIED")
     print("Branch:", BRANCH)
     print("Commit:", head)
     print("URL:", f"https://github.com/{REPOSITORY}/tree/{BRANCH}")
+    if state["week1_operator_work_complete"]:
+        print("WEEK 1 OPERATOR HANDOFF COMPLETE")
+        print("Current branch documentation: technical only; coordination templates removed.")
+        print("Start here:", f"https://github.com/{REPOSITORY}/blob/{head}/research/README.md")
+        print("Independent teammate review: PENDING; tasks are bundled in the handoff.")
     print("Stable Wi-Fi is no longer needed for this checkpoint.")
 
 
