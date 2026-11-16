@@ -1,0 +1,98 @@
+{
+  "compared_measurements": 495,
+  "environment": {
+    "kernel_release": {
+      "a": "6.18.44-fc-v470",
+      "b": "6.18.44-fc-v470",
+      "same": true
+    },
+    "mode": {
+      "a": "local",
+      "b": "local",
+      "same": true
+    },
+    "probe_root_filesystems": {
+      "a": [
+        "ext4",
+        "tmpfs"
+      ],
+      "b": [
+        "ext4"
+      ],
+      "same": false
+    },
+    "python_version": {
+      "a": "3.13.18",
+      "b": "3.13.18",
+      "same": true
+    },
+    "setup_effective_capabilities": {
+      "a": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+        "LINUX_IMMUTABLE",
+        "SETGID",
+        "SETUID"
+      ],
+      "b": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+        "LINUX_IMMUTABLE",
+        "SETGID",
+        "SETUID"
+      ],
+      "same": true
+    },
+    "sysctl_fs": {
+      "a": {
+        "protected_hardlinks": 1,
+        "protected_symlinks": 0,
+        "protected_regular": 0,
+        "protected_fifos": 0
+      },
+      "b": {
+        "protected_hardlinks": 1,
+        "protected_symlinks": 0,
+        "protected_regular": 0,
+        "protected_fifos": 0
+      },
+      "same": true
+    }
+  },
+  "environment_identical": false,
+  "verdict_differences": [],
+  "not_run_vs_measured_differences": [
+    "suppress/acl_agent_dir_write_file_read/fill_filesystem_then_recorder_append",
+    "suppress/acl_agent_dir_write_file_read/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/acl_agent_read_only/fill_filesystem_then_recorder_append",
+    "suppress/acl_agent_read_only/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/agent_owned_writable/fill_filesystem_then_recorder_append",
+    "suppress/agent_owned_writable/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/append_only_file_and_dir_same_account/fill_filesystem_then_recorder_append",
+    "suppress/append_only_file_and_dir_same_account/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/append_only_recorder_owned/fill_filesystem_then_recorder_append",
+    "suppress/append_only_recorder_owned/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/append_only_same_account/fill_filesystem_then_recorder_append",
+    "suppress/append_only_same_account/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/recorder_dir_in_agent_owned_parent/fill_filesystem_then_recorder_append",
+    "suppress/recorder_dir_in_agent_owned_parent/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/recorder_file_agent_writable_dir/fill_filesystem_then_recorder_append",
+    "suppress/recorder_file_agent_writable_dir/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/recorder_owned_agent_readonly/fill_filesystem_then_recorder_append",
+    "suppress/recorder_owned_agent_readonly/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/recorder_owned_no_agent_access/fill_filesystem_then_recorder_append",
+    "suppress/recorder_owned_no_agent_access/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/setgid_2770_shared_group_file_0640/fill_filesystem_then_recorder_append",
+    "suppress/setgid_2770_shared_group_file_0640/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/setgid_2770_shared_group_file_0660/fill_filesystem_then_recorder_append",
+    "suppress/setgid_2770_shared_group_file_0660/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/sticky_1770_shared_group_dir/fill_filesystem_then_recorder_append",
+    "suppress/sticky_1770_shared_group_dir/fill_filesystem_then_recorder_append_separate_fs",
+    "suppress/sticky_1777_dir_recorder_file/fill_filesystem_then_recorder_append",
+    "suppress/sticky_1777_dir_recorder_file/fill_filesystem_then_recorder_append_separate_fs"
+  ],
+  "identical": false,
+  "identical_verdicts": true
+}
