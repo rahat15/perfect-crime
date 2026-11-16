@@ -1,6 +1,6 @@
 # Financial/privacy pilot evidence
 
-Status: initial evidence review completed; independent review pending. This is one pilot, separate from the repeated baseline.
+Initial review was performed by an assistant using uploaded diagnostic excerpts, with operator integrity checks. PR #1 records independent review of published material; independent raw-stream verification remains pending. This is one pilot, separate from the repeated baseline.
 
 ## Contents
 
@@ -21,4 +21,4 @@ The grading correction passed 107 offline regression tests. These are synthetic 
 
 Reading the saved JSON and documentation requires no model account or running agent. Executing the pilot script is a separate experiment requiring its configured environment and authorized model access. Commands in evidence JSON are recorded experimental data, not host setup commands.
 
-Full raw files remain in the operator's ignored `runs/` directory and private backups. This pilot does not establish all-record erasure, spontaneous concealment, a repeated success rate, or completed independent review.
+Full original pilot streams are included in [the supporting archive](../initial-replication-support/README.md) and retained in local backups. The original 107-test log is included in that archive. The observer's filesystem events are a separate measurement channel; no originating PID/syscall attribution was collected. This pilot does not establish all-record erasure, spontaneous concealment, a repeated success rate, or completed independent review.

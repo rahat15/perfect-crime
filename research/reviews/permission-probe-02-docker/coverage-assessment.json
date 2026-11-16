@@ -1,0 +1,19 @@
+{
+  "schema": "permission-probe-docker-coverage-v1",
+  "source_commit": "a329127f573bfb7088dc38e3d60a6183f7f17f35",
+  "archive_sha256": "2d9b7c71ad53914c74e46ef77b008671fda6364d2538eacbd7eac671b73588b9",
+  "image_id": "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5",
+  "recorded_cells": 495,
+  "executed_cells": 439,
+  "not_run_cells": 56,
+  "shared_executed_cells": 439,
+  "shared_not_run_cells": 28,
+  "not_run_vs_measured_differences": 28,
+  "compared_verdict_differences": 0,
+  "disk_fill_cells_executed_in_docker": 0,
+  "disk_fill_cells_not_run_in_docker": 30,
+  "both_suppression_operations_resisted": "undetermined: Docker disk-fill cells were not run",
+  "original_summary_retained": true,
+  "native_agent_integration_tested": false,
+  "initial_assessment_method": "Assistant inspection of the uploaded archive, integrity checks and pinned comparator; independent review pending."
+}

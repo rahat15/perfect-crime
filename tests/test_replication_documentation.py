@@ -11,7 +11,7 @@ import unittest
 from unittest.mock import patch
 import zipfile
 
-from research.tools import install_week1_final as update
+from research.tools import install_replication_documentation as update
 from research.tools import pause_checkpoint as checkpoint
 from research.tools import build_pilot_review as pilot
 

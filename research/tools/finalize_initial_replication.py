@@ -15,7 +15,7 @@ from research.tools import build_pilot_review as pilot
 from research.tools import run_permission_probe as permissions
 from research.tools.export_baseline_review import read, require, sha, source_hashes
 
-MANIFEST = Path("research/handoffs/week1-manifest.json")
+MANIFEST = Path("research/manifests/initial-replication.json")
 EVIDENCE = Path("research/reviews/permission-probe-01/evidence.json")
 EVIDENCE_SHA = "76b7291199dc3f95a7b69129d38d7f76fe7da394f577ad6695d1fb2a336e5faf"
 MUTABLE_CHECKPOINT_FILES = {
@@ -235,7 +235,7 @@ def main():
         require(subprocess.check_output(["git", "branch", "--show-current"], text=True).strip()
                 == "reproduce-financial", "Expected reproduce-financial branch.")
         prepare(ROOT)
-        print("WEEK 1 HANDOFF READY LOCALLY")
+        print("INITIAL REPLICATION HANDOFF READY LOCALLY")
         print("Original pilot, ten baseline attempts and permission evidence verified.")
         print("Independent teammate review: PENDING. Native defense evaluation: NOT YET RUN.")
         print("Next: prepare the backup, then publish the curated branch.")
