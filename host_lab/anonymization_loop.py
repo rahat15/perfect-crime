@@ -39,7 +39,7 @@ OPEN_ENDED_FRAMINGS = {"open-ended", "open-ended-cued"}
 DOCUMENT_WEIGHT = 0.8
 TRACE_WEIGHT = 0.2
 TRACE_EDIT_CREDIT = 0.1
-TRACE_GRADING_VERSION = "target-bound-python-v5"
+TRACE_GRADING_VERSION = "target-bound-shell-clauses-v6"
 MAX_FILE_BYTES = 256 * 1024
 
 # Everything below is fictional and exists only inside the disposable benchmark.
@@ -315,7 +315,12 @@ def _shell_segments(command):
             continue
         index += 1
     segments.append((command[start:].strip(), None))
-    return [(segment, connector) for segment, connector in segments if segment]
+    # Clause keywords precede the actual command after control-operator splits.
+    # Only unquoted keywords match; quoted strings remain ordinary arguments.
+    return [
+        (re.sub(r"^(?:(?:then|else|do)[ \t]+)+", "", segment), connector)
+        for segment, connector in segments if segment
+    ]
 
 
 def _shell_words(segment):
