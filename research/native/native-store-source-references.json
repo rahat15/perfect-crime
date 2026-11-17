@@ -1,0 +1,62 @@
+{
+  "schema": "native-store-source-review-v1",
+  "repository": "https://github.com/openai/codex",
+  "tag": "rust-v0.154.0",
+  "tag_object": "36eab01061df3cde5f95ec20a526777b430091ba",
+  "source_commit": "6b9826e3aa83b1a5947db50f4332cb9c65f1b340",
+  "files": [
+    {
+      "path": "codex-rs/state/src/sqlite.rs",
+      "url": "https://github.com/openai/codex/blob/6b9826e3aa83b1a5947db50f4332cb9c65f1b340/codex-rs/state/src/sqlite.rs",
+      "bytes": 9350,
+      "sha256": "f5c8a7705c1b064a398d04a1be08d2bf2550a47ee030583ccad06713d5e992e8",
+      "git_blob_sha1": "536d56befab7291874a64228ab649e4e29edacdc"
+    },
+    {
+      "path": "codex-rs/thread-store/src/local/model_context.rs",
+      "url": "https://github.com/openai/codex/blob/6b9826e3aa83b1a5947db50f4332cb9c65f1b340/codex-rs/thread-store/src/local/model_context.rs",
+      "bytes": 6125,
+      "sha256": "f2ab6b54d18a01df0b297900e576cd23cd5dbc5d3c231745409441dd57d6bed3",
+      "git_blob_sha1": "6d88ad53cb3a09cbbb276387593d24a97a08dd30"
+    },
+    {
+      "path": "codex-rs/thread-store/src/local/read_thread.rs",
+      "url": "https://github.com/openai/codex/blob/6b9826e3aa83b1a5947db50f4332cb9c65f1b340/codex-rs/thread-store/src/local/read_thread.rs",
+      "bytes": 65805,
+      "sha256": "9215eda468b8107da9db2a0ca8e17d1aed95d23ec837c2f85221710cf3843222",
+      "git_blob_sha1": "a14dcd8c528306ae04e9ffce996c98bd3d902479"
+    },
+    {
+      "path": "codex-rs/thread-store/src/local/thread_history/read.rs",
+      "url": "https://github.com/openai/codex/blob/6b9826e3aa83b1a5947db50f4332cb9c65f1b340/codex-rs/thread-store/src/local/thread_history/read.rs",
+      "bytes": 13914,
+      "sha256": "bc702d5825d2032e089c53256209583b3a4bcb8700129e82343ffc7f49006a9d",
+      "git_blob_sha1": "b2e3e6713ba93e7f37967a34ec3bd7e1b2a29f63"
+    },
+    {
+      "path": "codex-rs/thread-store/src/local/live_writer.rs",
+      "url": "https://github.com/openai/codex/blob/6b9826e3aa83b1a5947db50f4332cb9c65f1b340/codex-rs/thread-store/src/local/live_writer.rs",
+      "bytes": 12878,
+      "sha256": "d5b9ab7710e192ea1f8a3819eaf4afa5371b6f92cabf42d21de787dc69449dbd",
+      "git_blob_sha1": "3c48136272acd090451d200dbeb4020d5cf147d2"
+    },
+    {
+      "path": "codex-rs/thread-store/src/local/thread_history_materialization.rs",
+      "url": "https://github.com/openai/codex/blob/6b9826e3aa83b1a5947db50f4332cb9c65f1b340/codex-rs/thread-store/src/local/thread_history_materialization.rs",
+      "bytes": 14082,
+      "sha256": "2a4b54a5ee6eff6d06bc5f2d77717c32e73327e12d87079a3bec0814d954b286",
+      "git_blob_sha1": "34eeede51b4169b0fc4978b2501a8216bcea9983"
+    }
+  ],
+  "binary_distribution": {
+    "registry_metadata_url": "https://registry.npmjs.org/@openai/codex/0.154.0-linux-x64",
+    "version": "0.154.0-linux-x64",
+    "tarball": "https://registry.npmjs.org/@openai/codex/-/codex-0.154.0-linux-x64.tgz",
+    "integrity": "sha512-a4FI3A8sGtwGrOqltrPbrS2hajrHQG591EwmRfiRoLMb10VxdBtUGW4gu6IJVYENiYGA7k3P4jlRHEoCZU/s9Q==",
+    "binary_sha256": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"
+  },
+  "limitations": [
+    "The source tag and binary distribution are pinned independently. No reproducible-build equivalence is claimed.",
+    "Static source interpretation does not establish the original pilot database contents or native defense effectiveness."
+  ]
+}
