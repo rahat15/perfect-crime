@@ -37,7 +37,9 @@ CAPTURE_SOURCES = ('research/native/native_identity_capture.py',
     'research/native/native_store_fixture.py', 'research/native/native_functionality_capture.py',
     'research/native/native_history_capture.py')
 STAGES = ('initial-task', 'privacy-request', 'resume')
-CLOCK_OUTPUT = Path('runs/native/history-clock-controls-01.json')
+CLOCK_OUTPUT = Path('runs/native/history-clock-controls-02.json')
+FAILED_CLOCK = Path('runs/native/history-clock-controls-01.json')
+FAILED_CLOCK_CANONICAL_SHA = 'e3e278155b694a3b21d156285ae262524e373a860084ae472a462f9513f7b5d8'
 
 
 def prior_inputs(root=ROOT):
@@ -70,6 +72,19 @@ def source_snapshot():
     commit, source = integration.source_snapshot()
     require(set(FILES).issubset(source), 'Commit the complete pilot source before collection.')
     return commit, source
+
+
+def previous_clock_failure(root=ROOT):
+    raw = integration.startup.safe_read(root, FAILED_CLOCK)
+    value = json.loads(raw)
+    canonical = json.dumps(value, sort_keys=True, separators=(',', ':')).encode()
+    require(sha(canonical) == FAILED_CLOCK_CANONICAL_SHA,
+            'The reviewed failed clock control is missing or changed. It was retained.')
+    return {'path': FAILED_CLOCK.as_posix(), 'raw_sha256': sha(raw),
+        'canonical_sha256': sha(canonical), 'source_commit': value['source_commit'],
+        'original_passed': value['passed'], 'original_cleanup_verified': value['cleanup_verified'],
+        'interpretation': 'PATH-based dummy selection launched the installed CLI, which exited before inference. '
+            'No control deletion occurred. The original native_model_executed field did not verify executable identity.'}
 
 
 def clock_bootstrap(role):
@@ -140,13 +155,15 @@ def clock_controls():
     require(Path.cwd().resolve() == ROOT, 'Run from the project directory.')
     prior_inputs()
     commit, source = source_snapshot()
+    previous_control = previous_clock_failure()
     path = ROOT / CLOCK_OUTPUT
     require(original.boundary.safe(path) and not path.exists(), 'An earlier clock control was retained. Do not rerun.')
     name = 'native-clock-control-' + uuid.uuid4().hex[:12]
     require(cli.docker('image', 'inspect', '--format', '{{.Id}}', original.IMAGE).stdout.strip() == original.IMAGE,
             'Pinned image unavailable; no download was attempted.')
-    result = {'schema': 'native-history-clock-checkpoint-v1', 'source_commit': commit,
+    result = {'schema': 'native-history-clock-checkpoint-v2', 'source_commit': commit,
         'clock_source_sha256': sha(source['research/native/native_history_clock.py']),
+        'previous_control': previous_control,
         'container': name, 'errors': [], 'cleanup_verified': False, 'model_calls': 0}
     print('Offline clock control: pinned recorder checks and a disposable dummy child; no model calls.', flush=True)
     try:
@@ -162,6 +179,10 @@ def clock_controls():
             and not host.get('CapAdd') and {v.upper() for v in host.get('CapDrop') or []} == {'ALL'}
             and not host.get('Binds') and not host.get('Devices') and not host.get('VolumesFrom')
             and all(v['Type'] == 'tmpfs' for v in info['Mounts']), 'Clock control isolation differs.')
+        result['isolation'] = {'image_id': info['Image'], 'user': config['User'],
+            'network': host['NetworkMode'], 'readonly_root': host['ReadonlyRootfs'],
+            'cap_drop': host.get('CapDrop'), 'security_options': host.get('SecurityOpt'),
+            'tmpfs': host.get('Tmpfs'), 'host_mounts': False, 'credential_mounts': False}
         process = cli.docker('start', '--attach', name, timeout=45, check=False)
         result.update(stdout=process.stdout, stderr=process.stderr, transport_exit_code=process.returncode)
         state = json.loads(cli.docker('inspect', name).stdout)[0]['State']
@@ -169,28 +190,43 @@ def clock_controls():
         require(process.returncode == state['ExitCode'] == 0 and state['OOMKilled'] is False,
                 'Clock control process did not complete.')
         result['observations'] = json.loads(process.stdout)
-        require(result['observations']['passed'] is True, 'Monotonic clock control did not pass.')
+        require(result['observations']['passed'] is True
+            and result['observations']['dummy_child_verified'] is True
+            and result['observations']['native_cli_executable_invoked'] is False,
+            'Corrected dummy identity or monotonic clock control did not pass.')
     except Exception as exc:
         result['errors'].append(type(exc).__name__ + ': ' + str(exc))
     finally:
         cli.docker('rm', '--force', name, check=False)
         result['cleanup_verified'] = not cli.docker('ps', '-aq', '--filter', 'name=^/' + name + '$').stdout.strip()
     result['source_unchanged'] = source_snapshot() == (commit, source)
+    result['previous_control_unchanged'] = previous_clock_failure() == previous_control
     result['passed'] = (not result['errors'] and result['cleanup_verified'] and result['source_unchanged']
+        and result['previous_control_unchanged']
         and result.get('observations', {}).get('passed') is True)
     path.parent.mkdir(parents=True, exist_ok=True)
     save(path, result)
     print('Monotonic clock control passed:', result['passed'])
+    print('Dummy child verified:', result.get('observations', {}).get('dummy_child_verified'))
+    print('Native CLI executable invoked:', result.get('observations', {}).get('native_cli_executable_invoked'))
+    print('Original failed control unchanged:', result['previous_control_unchanged'])
     print('Control container removed:', result['cleanup_verified'])
+    if result['errors']:
+        print('Control errors:', result['errors'])
     print('Saved:', path)
     return 0 if result['passed'] else 1
 
 
 def verified_clock_controls(commit, source):
     value = json.loads(integration.startup.safe_read(ROOT, CLOCK_OUTPUT))
-    require(value.get('source_commit') == commit and value.get('passed') is True
+    require(value.get('schema') == 'native-history-clock-checkpoint-v2'
+        and value.get('source_commit') == commit and value.get('passed') is True
         and value.get('cleanup_verified') is True and not value.get('errors')
-        and value.get('clock_source_sha256') == sha(source['research/native/native_history_clock.py']),
+        and value.get('clock_source_sha256') == sha(source['research/native/native_history_clock.py'])
+        and value.get('observations', {}).get('dummy_child_verified') is True
+        and value.get('observations', {}).get('native_cli_executable_invoked') is False
+        and value.get('previous_control_unchanged') is True
+        and value.get('previous_control') == previous_clock_failure(),
         'The offline clock control has not passed for this committed source.')
     return value
 
@@ -532,6 +568,8 @@ def collect(export, backup_dir):
     print('Checking subscription metadata access before either live pilot.', flush=True)
     auth = access.check_access()
     folder.mkdir(parents=True)
+    (folder / 'clock-control-original-failure.json').write_bytes(
+        integration.startup.safe_read(ROOT, FAILED_CLOCK))
     for name, content in source.items():
         path = folder / 'source' / name
         path.parent.mkdir(parents=True, exist_ok=True)
