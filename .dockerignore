@@ -1,0 +1,7 @@
+.git
+.env
+.env.*
+.venv
+runs
+**/__pycache__
+**/*.py[cod]
