@@ -1,0 +1,184 @@
+{
+  "recorded_cells": 495,
+  "coverage": {
+    "a": {
+      "ordinary_tampering_matrix": {
+        "recorded": 240,
+        "executed": 226,
+        "not_run": 14,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 14,
+          "layout_refused_the_recorder_precondition": 0,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "legitimate_and_read_controls": {
+        "recorded": 75,
+        "executed": 75,
+        "not_run": 0,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 0,
+          "layout_refused_the_recorder_precondition": 0,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "inherited_descriptor_controls": {
+        "recorded": 135,
+        "executed": 123,
+        "not_run": 12,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 0,
+          "layout_refused_the_recorder_precondition": 12,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "suppression_of_future_records": {
+        "recorded": 45,
+        "executed": 43,
+        "not_run": 2,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 2,
+          "layout_refused_the_recorder_precondition": 0,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "total": {
+        "recorded": 495,
+        "executed": 467,
+        "not_run": 28,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 16,
+          "layout_refused_the_recorder_precondition": 12,
+          "not_executed_in_this_environment": 0
+        }
+      }
+    },
+    "b": {
+      "ordinary_tampering_matrix": {
+        "recorded": 240,
+        "executed": 226,
+        "not_run": 14,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 14,
+          "layout_refused_the_recorder_precondition": 0,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "legitimate_and_read_controls": {
+        "recorded": 75,
+        "executed": 75,
+        "not_run": 0,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 0,
+          "layout_refused_the_recorder_precondition": 0,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "inherited_descriptor_controls": {
+        "recorded": 135,
+        "executed": 123,
+        "not_run": 12,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 0,
+          "layout_refused_the_recorder_precondition": 12,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "suppression_of_future_records": {
+        "recorded": 45,
+        "executed": 43,
+        "not_run": 2,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 2,
+          "layout_refused_the_recorder_precondition": 0,
+          "not_executed_in_this_environment": 0
+        }
+      },
+      "total": {
+        "recorded": 495,
+        "executed": 467,
+        "not_run": 28,
+        "not_run_by_kind": {
+          "not_applicable_to_this_layout": 16,
+          "layout_refused_the_recorder_precondition": 12,
+          "not_executed_in_this_environment": 0
+        }
+      }
+    }
+  },
+  "executed_in_both": 467,
+  "not_run_in_both": 28,
+  "not_run_vs_measured": 0,
+  "executed_only_in_a": [],
+  "executed_only_in_b": [],
+  "not_run_in_both_for_different_kinds_of_reason": [],
+  "verdict_differences_among_executed_in_both": [],
+  "verdict_difference_count": 0,
+  "same_coverage": true,
+  "verdicts_identical_among_cells_executed_in_both": true,
+  "same_coverage_and_identical_verdicts": true,
+  "environment": {
+    "kernel_release": {
+      "a": "6.18.44-fc-v509",
+      "b": "6.18.44-fc-v509",
+      "same": true
+    },
+    "mode": {
+      "a": "local",
+      "b": "local-variant",
+      "same": false
+    },
+    "probe_root_filesystems": {
+      "a": [
+        "ext4",
+        "tmpfs"
+      ],
+      "b": [
+        "ext4",
+        "tmpfs"
+      ],
+      "same": true
+    },
+    "python_version": {
+      "a": "3.13.18",
+      "b": "3.13.18",
+      "same": true
+    },
+    "setup_effective_capabilities": {
+      "a": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+        "LINUX_IMMUTABLE",
+        "SETGID",
+        "SETUID"
+      ],
+      "b": [
+        "CHOWN",
+        "DAC_OVERRIDE",
+        "FOWNER",
+        "LINUX_IMMUTABLE",
+        "SETGID",
+        "SETUID"
+      ],
+      "same": true
+    },
+    "sysctl_fs": {
+      "a": {
+        "protected_hardlinks": 1,
+        "protected_symlinks": 0,
+        "protected_regular": 0,
+        "protected_fifos": 0
+      },
+      "b": {
+        "protected_hardlinks": 1,
+        "protected_symlinks": 0,
+        "protected_regular": 1,
+        "protected_fifos": 0
+      },
+      "same": false
+    }
+  },
+  "environment_identical": false,
+  "note": "A cell not run in either file contributes no verdict agreement. 'verdicts identical' speaks only about the cells executed in both files; it is not a statement about coverage."
+}

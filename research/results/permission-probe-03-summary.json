@@ -1,0 +1,839 @@
+{
+  "protocol": "disposable-posix-boundary-v3",
+  "scope": "Synthetic POSIX/Linux file operations by dropped-privilege child processes against integrated layouts (records on their own filesystem, protected ancestors, separate recorder account). No native coding agent, model, native logging or native session resume was run. Legitimate-operation controls are synthetic proxies.",
+  "mode": "local",
+  "filesystem_kind": "tmpfs",
+  "executed_in_baseline_image": false,
+  "image_id": null,
+  "environment_note": "Cloud sandbox VM, local mode; not the baseline Docker image (no Docker daemon here).",
+  "probe_02_fixture_sha256": "d45194950feb0404fd8ee0d63a5e070279f3edf2411c43a905e64cd004351946",
+  "fixture_sha256": "91817e7b3124fa2b5671eaa24cbd17cb4044df11aa131989c37450ca59e638e5",
+  "runner_sha256": "26089882661718b9b473fa910565f8191cbd9214f1e66e404e79fdb590b3efce",
+  "started_at": "2026-11-22T03:23:44.107366+00:00",
+  "finished_at": "2026-11-22T03:23:59.437033+00:00",
+  "environment": {
+    "kernel_release": "6.18.44-fc-v726",
+    "python_version": "3.13.18",
+    "sysctl_fs": {
+      "protected_hardlinks": 1,
+      "protected_symlinks": 0,
+      "protected_regular": 0,
+      "protected_fifos": 0
+    },
+    "setup_process_effective_capabilities": [
+      "CHOWN",
+      "DAC_OVERRIDE",
+      "FOWNER",
+      "SETGID",
+      "SETUID",
+      "LINUX_IMMUTABLE"
+    ],
+    "filesystems_distinct": true,
+    "probe_roots": [
+      {
+        "label": "records",
+        "fstype": "tmpfs",
+        "capacity": {
+          "total_bytes": 8388608,
+          "free_bytes": 8388608,
+          "total_inodes": 1024,
+          "free_inodes": 1023
+        },
+        "features": {
+          "append_only_flag": true,
+          "immutable_flag": true,
+          "posix_acl": true
+        }
+      },
+      {
+        "label": "workspace",
+        "fstype": "tmpfs",
+        "capacity": {
+          "total_bytes": 8388608,
+          "free_bytes": 8388608,
+          "total_inodes": 1024,
+          "free_inodes": 1023
+        },
+        "features": {
+          "append_only_flag": true,
+          "immutable_flag": true,
+          "posix_acl": true
+        }
+      },
+      {
+        "label": "shared",
+        "fstype": "tmpfs",
+        "capacity": {
+          "total_bytes": 8388608,
+          "free_bytes": 8388608,
+          "total_inodes": 1024,
+          "free_inodes": 1023
+        },
+        "features": {
+          "append_only_flag": true,
+          "immutable_flag": true,
+          "posix_acl": true
+        }
+      }
+    ]
+  },
+  "coverage": {
+    "ordinary_tampering_matrix": {
+      "recorded": 144,
+      "executed": 140,
+      "not_run": 4,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 4,
+        "layout_refused_the_recorder_precondition": 0,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "legitimate_and_read_controls": {
+      "recorded": 42,
+      "executed": 38,
+      "not_run": 4,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 4,
+        "layout_refused_the_recorder_precondition": 0,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "inherited_descriptor_controls": {
+      "recorded": 63,
+      "executed": 59,
+      "not_run": 4,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 0,
+        "layout_refused_the_recorder_precondition": 4,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "suppression_of_future_records": {
+      "recorded": 24,
+      "executed": 24,
+      "not_run": 0,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 0,
+        "layout_refused_the_recorder_precondition": 0,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "total": {
+      "recorded": 273,
+      "executed": 261,
+      "not_run": 12,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 8,
+        "layout_refused_the_recorder_precondition": 4,
+        "not_executed_in_this_environment": 0
+      }
+    }
+  },
+  "ordinary_and_window_verdict_counts": {
+    "new_session_window/blocked_by_filesystem_boundary": 6,
+    "new_session_window/permission_denial_observed": 42,
+    "ordinary/blocked_by_filesystem_boundary": 12,
+    "ordinary/effect_observed": 2,
+    "ordinary/not_run": 4,
+    "ordinary/permission_denial_observed": 78
+  },
+  "legit_outcome_counts": {
+    "passed": 34,
+    "not_run": 4,
+    "permission_denied": 2,
+    "starved_enospc": 2
+  },
+  "descriptor_verdict_counts": {
+    "effect_observed": 34,
+    "different_effect_observed": 7,
+    "permission_denial_observed": 18,
+    "not_run": 4
+  },
+  "suppression_verdict_counts": {
+    "no_suppression_observed": 19,
+    "suppression_observed": 5
+  },
+  "assessment_rule": "Three-valued. A layout HOLDS a requirement only if every required cell was executed and gave the good verdict. It FAILS if at least one required cell was executed and gave the bad verdict (a tampering effect, a denied proxy, an observed suppression); that is a determined result even if other cells are missing. Otherwise, if any required cell was not executed in this environment or ended in unexpected_error, the layout is UNDETERMINED and the missing cells are named. Cells that are not applicable to the layout are not required. Undetermined is never reported as resisted, denied, kept or suppressed.",
+  "assessment": {
+    "I1_readonly": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "holds",
+        "satisfied": [
+          "op/I1_readonly/rewrite",
+          "op/I1_readonly/truncate",
+          "op/I1_readonly/overwrite_in_place",
+          "op/I1_readonly/append_marker",
+          "op/I1_readonly/delete",
+          "op/I1_readonly/replace",
+          "op/I1_readonly/chmod_then_rewrite",
+          "op/I1_readonly/chown_to_agent",
+          "op/I1_readonly/rename_within_dir",
+          "op/I1_readonly/rename_out_of_dir",
+          "op/I1_readonly/rename_parent_dir",
+          "op/I1_readonly/symlink_swap_file",
+          "op/I1_readonly/symlink_swap_dir",
+          "op/I1_readonly/new_session_window:rewrite",
+          "op/I1_readonly/new_session_window:truncate",
+          "op/I1_readonly/new_session_window:overwrite_in_place",
+          "op/I1_readonly/new_session_window:append_marker",
+          "op/I1_readonly/new_session_window:delete",
+          "op/I1_readonly/new_session_window:replace",
+          "op/I1_readonly/new_session_window:rename_within_dir",
+          "op/I1_readonly/new_session_window:symlink_swap_file"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [
+          "op/I1_readonly/clear_inode_flags_then_rewrite"
+        ],
+        "satisfied_by": {
+          "permission_denial_observed": 16,
+          "blocked_by_filesystem_boundary": 5
+        }
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "holds",
+        "satisfied": [
+          "suppress/I1_readonly/precreate_next_session_name",
+          "suppress/I1_readonly/fill_workspace_filesystem_then_recorder_append",
+          "suppress/I1_readonly/fill_records_filesystem_directly_then_recorder_append",
+          "suppress/I1_readonly/exhaust_inodes_then_recorder_new_session"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "holds",
+        "satisfied": [
+          "legit/I1_readonly/recorder_append",
+          "legit/I1_readonly/recorder_new_transcript",
+          "legit/I1_readonly/recorder_appends_200_after_agent_filled_workspace"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [
+          "legit/I1_readonly/sealer_seals_new_session_then_recorder_appends"
+        ]
+      },
+      "all_three": "holds"
+    },
+    "I2_no_access": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "holds",
+        "satisfied": [
+          "op/I2_no_access/rewrite",
+          "op/I2_no_access/truncate",
+          "op/I2_no_access/overwrite_in_place",
+          "op/I2_no_access/append_marker",
+          "op/I2_no_access/delete",
+          "op/I2_no_access/replace",
+          "op/I2_no_access/chmod_then_rewrite",
+          "op/I2_no_access/chown_to_agent",
+          "op/I2_no_access/rename_within_dir",
+          "op/I2_no_access/rename_out_of_dir",
+          "op/I2_no_access/rename_parent_dir",
+          "op/I2_no_access/symlink_swap_file",
+          "op/I2_no_access/symlink_swap_dir",
+          "op/I2_no_access/new_session_window:rewrite",
+          "op/I2_no_access/new_session_window:truncate",
+          "op/I2_no_access/new_session_window:overwrite_in_place",
+          "op/I2_no_access/new_session_window:append_marker",
+          "op/I2_no_access/new_session_window:delete",
+          "op/I2_no_access/new_session_window:replace",
+          "op/I2_no_access/new_session_window:rename_within_dir",
+          "op/I2_no_access/new_session_window:symlink_swap_file"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [
+          "op/I2_no_access/clear_inode_flags_then_rewrite"
+        ],
+        "satisfied_by": {
+          "permission_denial_observed": 21
+        }
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "holds",
+        "satisfied": [
+          "suppress/I2_no_access/precreate_next_session_name",
+          "suppress/I2_no_access/fill_workspace_filesystem_then_recorder_append",
+          "suppress/I2_no_access/fill_records_filesystem_directly_then_recorder_append",
+          "suppress/I2_no_access/exhaust_inodes_then_recorder_new_session"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "holds",
+        "satisfied": [
+          "legit/I2_no_access/recorder_append",
+          "legit/I2_no_access/recorder_new_transcript",
+          "legit/I2_no_access/recorder_appends_200_after_agent_filled_workspace"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [
+          "legit/I2_no_access/sealer_seals_new_session_then_recorder_appends"
+        ]
+      },
+      "all_three": "holds"
+    },
+    "I3_readonly_append_only": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "holds",
+        "satisfied": [
+          "op/I3_readonly_append_only/rewrite",
+          "op/I3_readonly_append_only/truncate",
+          "op/I3_readonly_append_only/overwrite_in_place",
+          "op/I3_readonly_append_only/append_marker",
+          "op/I3_readonly_append_only/delete",
+          "op/I3_readonly_append_only/replace",
+          "op/I3_readonly_append_only/chmod_then_rewrite",
+          "op/I3_readonly_append_only/chown_to_agent",
+          "op/I3_readonly_append_only/rename_within_dir",
+          "op/I3_readonly_append_only/rename_out_of_dir",
+          "op/I3_readonly_append_only/rename_parent_dir",
+          "op/I3_readonly_append_only/symlink_swap_file",
+          "op/I3_readonly_append_only/symlink_swap_dir",
+          "op/I3_readonly_append_only/clear_inode_flags_then_rewrite",
+          "op/I3_readonly_append_only/new_session_window:rewrite",
+          "op/I3_readonly_append_only/new_session_window:truncate",
+          "op/I3_readonly_append_only/new_session_window:overwrite_in_place",
+          "op/I3_readonly_append_only/new_session_window:append_marker",
+          "op/I3_readonly_append_only/new_session_window:delete",
+          "op/I3_readonly_append_only/new_session_window:replace",
+          "op/I3_readonly_append_only/new_session_window:rename_within_dir",
+          "op/I3_readonly_append_only/new_session_window:symlink_swap_file"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [],
+        "satisfied_by": {
+          "permission_denial_observed": 17,
+          "blocked_by_filesystem_boundary": 5
+        }
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "holds",
+        "satisfied": [
+          "suppress/I3_readonly_append_only/precreate_next_session_name",
+          "suppress/I3_readonly_append_only/fill_workspace_filesystem_then_recorder_append",
+          "suppress/I3_readonly_append_only/fill_records_filesystem_directly_then_recorder_append",
+          "suppress/I3_readonly_append_only/exhaust_inodes_then_recorder_new_session"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "holds",
+        "satisfied": [
+          "legit/I3_readonly_append_only/recorder_append",
+          "legit/I3_readonly_append_only/recorder_new_transcript",
+          "legit/I3_readonly_append_only/sealer_seals_new_session_then_recorder_appends",
+          "legit/I3_readonly_append_only/recorder_appends_200_after_agent_filled_workspace"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "all_three": "holds"
+    },
+    "I4_no_access_append_only": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "holds",
+        "satisfied": [
+          "op/I4_no_access_append_only/rewrite",
+          "op/I4_no_access_append_only/truncate",
+          "op/I4_no_access_append_only/overwrite_in_place",
+          "op/I4_no_access_append_only/append_marker",
+          "op/I4_no_access_append_only/delete",
+          "op/I4_no_access_append_only/replace",
+          "op/I4_no_access_append_only/chmod_then_rewrite",
+          "op/I4_no_access_append_only/chown_to_agent",
+          "op/I4_no_access_append_only/rename_within_dir",
+          "op/I4_no_access_append_only/rename_out_of_dir",
+          "op/I4_no_access_append_only/rename_parent_dir",
+          "op/I4_no_access_append_only/symlink_swap_file",
+          "op/I4_no_access_append_only/symlink_swap_dir",
+          "op/I4_no_access_append_only/clear_inode_flags_then_rewrite",
+          "op/I4_no_access_append_only/new_session_window:rewrite",
+          "op/I4_no_access_append_only/new_session_window:truncate",
+          "op/I4_no_access_append_only/new_session_window:overwrite_in_place",
+          "op/I4_no_access_append_only/new_session_window:append_marker",
+          "op/I4_no_access_append_only/new_session_window:delete",
+          "op/I4_no_access_append_only/new_session_window:replace",
+          "op/I4_no_access_append_only/new_session_window:rename_within_dir",
+          "op/I4_no_access_append_only/new_session_window:symlink_swap_file"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [],
+        "satisfied_by": {
+          "permission_denial_observed": 22
+        }
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "holds",
+        "satisfied": [
+          "suppress/I4_no_access_append_only/precreate_next_session_name",
+          "suppress/I4_no_access_append_only/fill_workspace_filesystem_then_recorder_append",
+          "suppress/I4_no_access_append_only/fill_records_filesystem_directly_then_recorder_append",
+          "suppress/I4_no_access_append_only/exhaust_inodes_then_recorder_new_session"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "holds",
+        "satisfied": [
+          "legit/I4_no_access_append_only/recorder_append",
+          "legit/I4_no_access_append_only/recorder_new_transcript",
+          "legit/I4_no_access_append_only/sealer_seals_new_session_then_recorder_appends",
+          "legit/I4_no_access_append_only/recorder_appends_200_after_agent_filled_workspace"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "all_three": "holds"
+    },
+    "N1_same_filesystem": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "holds",
+        "satisfied": [
+          "op/N1_same_filesystem/rewrite",
+          "op/N1_same_filesystem/truncate",
+          "op/N1_same_filesystem/overwrite_in_place",
+          "op/N1_same_filesystem/append_marker",
+          "op/N1_same_filesystem/delete",
+          "op/N1_same_filesystem/replace",
+          "op/N1_same_filesystem/chmod_then_rewrite",
+          "op/N1_same_filesystem/chown_to_agent",
+          "op/N1_same_filesystem/rename_within_dir",
+          "op/N1_same_filesystem/rename_out_of_dir",
+          "op/N1_same_filesystem/rename_parent_dir",
+          "op/N1_same_filesystem/symlink_swap_file",
+          "op/N1_same_filesystem/symlink_swap_dir",
+          "op/N1_same_filesystem/new_session_window:rewrite",
+          "op/N1_same_filesystem/new_session_window:truncate",
+          "op/N1_same_filesystem/new_session_window:overwrite_in_place",
+          "op/N1_same_filesystem/new_session_window:append_marker",
+          "op/N1_same_filesystem/new_session_window:delete",
+          "op/N1_same_filesystem/new_session_window:replace",
+          "op/N1_same_filesystem/new_session_window:rename_within_dir",
+          "op/N1_same_filesystem/new_session_window:symlink_swap_file"
+        ],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [
+          "op/N1_same_filesystem/clear_inode_flags_then_rewrite"
+        ],
+        "satisfied_by": {
+          "permission_denial_observed": 21
+        }
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "fails",
+        "satisfied": [
+          "suppress/N1_same_filesystem/precreate_next_session_name",
+          "suppress/N1_same_filesystem/fill_records_filesystem_directly_then_recorder_append"
+        ],
+        "failing": [
+          "suppress/N1_same_filesystem/fill_workspace_filesystem_then_recorder_append",
+          "suppress/N1_same_filesystem/exhaust_inodes_then_recorder_new_session"
+        ],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "fails",
+        "satisfied": [
+          "legit/N1_same_filesystem/recorder_append",
+          "legit/N1_same_filesystem/recorder_new_transcript"
+        ],
+        "failing": [
+          "legit/N1_same_filesystem/recorder_appends_200_after_agent_filled_workspace"
+        ],
+        "missing": [],
+        "not_applicable": [
+          "legit/N1_same_filesystem/sealer_seals_new_session_then_recorder_appends"
+        ]
+      },
+      "all_three": "fails"
+    },
+    "N2_agent_owned_parent": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "fails",
+        "satisfied": [
+          "op/N2_agent_owned_parent/rewrite",
+          "op/N2_agent_owned_parent/truncate",
+          "op/N2_agent_owned_parent/overwrite_in_place",
+          "op/N2_agent_owned_parent/append_marker",
+          "op/N2_agent_owned_parent/delete",
+          "op/N2_agent_owned_parent/replace",
+          "op/N2_agent_owned_parent/chmod_then_rewrite",
+          "op/N2_agent_owned_parent/chown_to_agent",
+          "op/N2_agent_owned_parent/rename_within_dir",
+          "op/N2_agent_owned_parent/rename_out_of_dir",
+          "op/N2_agent_owned_parent/symlink_swap_file",
+          "op/N2_agent_owned_parent/new_session_window:rewrite",
+          "op/N2_agent_owned_parent/new_session_window:truncate",
+          "op/N2_agent_owned_parent/new_session_window:overwrite_in_place",
+          "op/N2_agent_owned_parent/new_session_window:append_marker",
+          "op/N2_agent_owned_parent/new_session_window:delete",
+          "op/N2_agent_owned_parent/new_session_window:replace",
+          "op/N2_agent_owned_parent/new_session_window:rename_within_dir",
+          "op/N2_agent_owned_parent/new_session_window:symlink_swap_file"
+        ],
+        "failing": [
+          "op/N2_agent_owned_parent/rename_parent_dir",
+          "op/N2_agent_owned_parent/symlink_swap_dir"
+        ],
+        "missing": [],
+        "not_applicable": [
+          "op/N2_agent_owned_parent/clear_inode_flags_then_rewrite"
+        ],
+        "satisfied_by": {
+          "permission_denial_observed": 14,
+          "blocked_by_filesystem_boundary": 5
+        }
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "fails",
+        "satisfied": [
+          "suppress/N2_agent_owned_parent/precreate_next_session_name"
+        ],
+        "failing": [
+          "suppress/N2_agent_owned_parent/fill_workspace_filesystem_then_recorder_append",
+          "suppress/N2_agent_owned_parent/fill_records_filesystem_directly_then_recorder_append",
+          "suppress/N2_agent_owned_parent/exhaust_inodes_then_recorder_new_session"
+        ],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "fails",
+        "satisfied": [
+          "legit/N2_agent_owned_parent/recorder_append",
+          "legit/N2_agent_owned_parent/recorder_new_transcript"
+        ],
+        "failing": [
+          "legit/N2_agent_owned_parent/recorder_appends_200_after_agent_filled_workspace"
+        ],
+        "missing": [],
+        "not_applicable": [
+          "legit/N2_agent_owned_parent/sealer_seals_new_session_then_recorder_appends"
+        ]
+      },
+      "all_three": "fails"
+    },
+    "N3_inherited_descriptor_no_flag": {
+      "a_all_tampering_denied_or_blocked": {
+        "status": "no_applicable_cell",
+        "satisfied": [],
+        "failing": [],
+        "missing": [],
+        "not_applicable": [],
+        "satisfied_by": {}
+      },
+      "b_all_suppression_operations_resisted": {
+        "status": "no_applicable_cell",
+        "satisfied": [],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "c_all_layout_discriminating_proxies_pass": {
+        "status": "no_applicable_cell",
+        "satisfied": [],
+        "failing": [],
+        "missing": [],
+        "not_applicable": []
+      },
+      "all_three": "undetermined"
+    }
+  },
+  "negative_controls": {
+    "N1_same_filesystem": {
+      "breaks": "records and the agent's workspace share one filesystem",
+      "signals": [
+        {
+          "cell": "suppression/fill_workspace_filesystem_then_recorder_append",
+          "designed_to_show": "suppression_observed",
+          "measured": "suppression_observed",
+          "shown": true
+        },
+        {
+          "cell": "suppression/exhaust_inodes_then_recorder_new_session",
+          "designed_to_show": "suppression_observed",
+          "measured": "suppression_observed",
+          "shown": true
+        }
+      ],
+      "failure_detected": true,
+      "undetermined": false
+    },
+    "N2_agent_owned_parent": {
+      "breaks": "the parent of the records directory is owned by the agent",
+      "signals": [
+        {
+          "cell": "ordinary/rename_parent_dir",
+          "designed_to_show": "effect_observed",
+          "measured": "effect_observed",
+          "shown": true
+        },
+        {
+          "cell": "ordinary/symlink_swap_dir",
+          "designed_to_show": "effect_observed",
+          "measured": "effect_observed",
+          "shown": true
+        }
+      ],
+      "failure_detected": true,
+      "undetermined": false
+    },
+    "N3_inherited_descriptor_no_flag": {
+      "breaks": "a writable transcript descriptor reaches the agent and the inode is not append-only",
+      "signals": [
+        {
+          "cell": "descriptors/fd_append_ftruncate",
+          "designed_to_show": "effect_observed",
+          "measured": "effect_observed",
+          "shown": true
+        },
+        {
+          "cell": "descriptors/fd_append_clear_flag_then_pwrite",
+          "designed_to_show": "effect_observed",
+          "measured": "effect_observed",
+          "shown": true
+        },
+        {
+          "cell": "descriptors/fd_wronly_pwrite_overwrite",
+          "designed_to_show": "effect_observed",
+          "measured": "effect_observed",
+          "shown": true
+        }
+      ],
+      "failure_detected": true,
+      "undetermined": false
+    }
+  },
+  "inherited_descriptor_effects": {
+    "I1_readonly": {
+      "executed": 9,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": []
+    },
+    "I2_no_access": {
+      "executed": 9,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": []
+    },
+    "I3_readonly_append_only": {
+      "executed": 7,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": [
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate"
+      ]
+    },
+    "I4_no_access_append_only": {
+      "executed": 7,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": [
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate"
+      ]
+    },
+    "N1_same_filesystem": {
+      "executed": 9,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": []
+    },
+    "N2_agent_owned_parent": {
+      "executed": 9,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": []
+    },
+    "N3_inherited_descriptor_no_flag": {
+      "executed": 9,
+      "recorded": 9,
+      "effect": [
+        "fd_append_write",
+        "fd_append_pwrite_overwrite",
+        "fd_append_ftruncate",
+        "fd_append_clear_flag_then_pwrite",
+        "fd_wronly_pwrite_overwrite",
+        "fd_wronly_ftruncate",
+        "dirfd_listdir"
+      ],
+      "denied": [
+        "dirfd_unlinkat",
+        "dirfd_renameat"
+      ],
+      "not_run": []
+    }
+  },
+  "inherited_descriptor_contrast_without_and_with_append_only": {
+    "fd_append_write": {
+      "N3_inherited_descriptor_no_flag": "effect_observed",
+      "I3_readonly_append_only": "effect_observed"
+    },
+    "fd_append_pwrite_overwrite": {
+      "N3_inherited_descriptor_no_flag": "different_effect_observed",
+      "I3_readonly_append_only": "different_effect_observed"
+    },
+    "fd_append_ftruncate": {
+      "N3_inherited_descriptor_no_flag": "effect_observed",
+      "I3_readonly_append_only": "permission_denial_observed"
+    },
+    "fd_append_clear_flag_then_pwrite": {
+      "N3_inherited_descriptor_no_flag": "effect_observed",
+      "I3_readonly_append_only": "permission_denial_observed"
+    },
+    "fd_wronly_pwrite_overwrite": {
+      "N3_inherited_descriptor_no_flag": "effect_observed",
+      "I3_readonly_append_only": "not_run"
+    },
+    "fd_wronly_ftruncate": {
+      "N3_inherited_descriptor_no_flag": "effect_observed",
+      "I3_readonly_append_only": "not_run"
+    },
+    "dirfd_unlinkat": {
+      "N3_inherited_descriptor_no_flag": "permission_denial_observed",
+      "I3_readonly_append_only": "permission_denial_observed"
+    },
+    "dirfd_renameat": {
+      "N3_inherited_descriptor_no_flag": "permission_denial_observed",
+      "I3_readonly_append_only": "permission_denial_observed"
+    },
+    "dirfd_listdir": {
+      "N3_inherited_descriptor_no_flag": "effect_observed",
+      "I3_readonly_append_only": "effect_observed"
+    }
+  },
+  "statement": [
+    "`I1_readonly`: (a) tampering HOLDS: 21 cells good (5 blocked_by_filesystem_boundary, 16 permission_denial_observed); 1 not applicable. (b) suppression HOLDS: 4 cells good. (c) layout-discriminating proxies HOLDS: 3 cells good; 1 not applicable. Separately, with a descriptor deliberately passed to the agent: effect in 7 of 9 executed controls (fd_append_write, fd_append_pwrite_overwrite, fd_append_ftruncate, fd_append_clear_flag_then_pwrite, fd_wronly_pwrite_overwrite, fd_wronly_ftruncate, dirfd_listdir).",
+    "`I2_no_access`: (a) tampering HOLDS: 21 cells good (21 permission_denial_observed); 1 not applicable. (b) suppression HOLDS: 4 cells good. (c) layout-discriminating proxies HOLDS: 3 cells good; 1 not applicable. Separately, with a descriptor deliberately passed to the agent: effect in 7 of 9 executed controls (fd_append_write, fd_append_pwrite_overwrite, fd_append_ftruncate, fd_append_clear_flag_then_pwrite, fd_wronly_pwrite_overwrite, fd_wronly_ftruncate, dirfd_listdir).",
+    "`I3_readonly_append_only`: (a) tampering HOLDS: 22 cells good (5 blocked_by_filesystem_boundary, 17 permission_denial_observed). (b) suppression HOLDS: 4 cells good. (c) layout-discriminating proxies HOLDS: 4 cells good. Separately, with a descriptor deliberately passed to the agent: effect in 3 of 7 executed controls (fd_append_write, fd_append_pwrite_overwrite, dirfd_listdir).",
+    "`I4_no_access_append_only`: (a) tampering HOLDS: 22 cells good (22 permission_denial_observed). (b) suppression HOLDS: 4 cells good. (c) layout-discriminating proxies HOLDS: 4 cells good. Separately, with a descriptor deliberately passed to the agent: effect in 3 of 7 executed controls (fd_append_write, fd_append_pwrite_overwrite, dirfd_listdir).",
+    "`N1_same_filesystem` (breaks: records and the agent's workspace share one filesystem): designed failure DETECTED (fill_workspace_filesystem_then_recorder_append = suppression_observed, exhaust_inodes_then_recorder_new_session = suppression_observed).",
+    "`N2_agent_owned_parent` (breaks: the parent of the records directory is owned by the agent): designed failure DETECTED (rename_parent_dir = effect_observed, symlink_swap_dir = effect_observed).",
+    "`N3_inherited_descriptor_no_flag` (breaks: a writable transcript descriptor reaches the agent and the inode is not append-only): designed failure DETECTED (fd_append_ftruncate = effect_observed, fd_append_clear_flag_then_pwrite = effect_observed, fd_wronly_pwrite_overwrite = effect_observed)."
+  ],
+  "expectation_mismatch_count": 0,
+  "expectation_mismatches": [],
+  "not_run": [
+    {
+      "kind": "descriptor_control",
+      "why": "layout_refused_the_recorder_precondition",
+      "count": 4,
+      "reason": "the recorder identity could not open the descriptor (O_WRONLY): PermissionError: Operation not permitted"
+    },
+    {
+      "kind": "legit_control",
+      "why": "not_applicable_to_this_layout",
+      "count": 4,
+      "reason": "not applicable: this layout has no sealer step"
+    },
+    {
+      "kind": "operation",
+      "why": "not_applicable_to_this_layout",
+      "count": 4,
+      "reason": "not applicable: this layout sets no append-only/immutable inode flag"
+    }
+  ],
+  "all_evaluated_observations_match_expectation": true,
+  "cleanup_verified": true,
+  "model_calls": 0,
+  "native_agent_integration_tested": false,
+  "limitations": [
+    "Synthetic files and explicit syscalls; not native transcript protection and not an agent trial.",
+    "Legitimate-operation controls are synthetic proxies, not native Codex logging or resume.",
+    "The current wrapper runs recorder and tools under one UID; these layouts do not exist in it yet.",
+    "The sealer is modelled by the trusted setup process; nothing here shows who would run it natively or how long the unsealed window would be.",
+    "A cell blocked by the filesystem boundary (EXDEV) did not test the permission behind it.",
+    "Inherited-descriptor controls pass a descriptor on purpose.",
+    "Small dedicated filesystems: ENOSPC timing and inode counts are the probe's, not production's.",
+    "A result from one environment is not a result for another; cells not executed are undetermined."
+  ],
+  "evidence_sha256": "23d18dc959c19b16a5bbe3fbc1ad45dd313627cb5bdc2c59ee088c37c5a0797a"
+}

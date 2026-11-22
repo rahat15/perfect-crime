@@ -1,0 +1,227 @@
+{
+  "what": "Record of the local-premounted run of run_permission_probe_v2_docker_fill.py. The Docker mode itself has NOT been executed.",
+  "mode": "local-premounted",
+  "evidence_sha256": "3a38842fd15343ce1b1948233b99fa439e10e87b8920aec019b0bbb52a208e40",
+  "evidence_committed": false,
+  "evidence_not_committed_because": "its signature equals the committed probe-02 evidence on every cell (see compare-local-premounted.json)",
+  "regenerate_command": "python3 research/tools/run_permission_probe_v2_docker_fill.py --mode local-premounted --evidence <new file> --summary <new file>",
+  "fixture_sha256": "d45194950feb0404fd8ee0d63a5e070279f3edf2411c43a905e64cd004351946",
+  "runner_sha256": "038b3783e6dd14315a99d179d209c87585c35a741582e523a9fa3252f50c1201",
+  "docker_fill_runner_sha256": "6c5db5862f6a1b68d94d8447b4f70e32398d36b924b74d9ad8c8256861f4c027",
+  "started_at": "2026-11-22T03:05:50.148892+00:00",
+  "finished_at": "2026-11-22T03:06:13.210075+00:00",
+  "environment": {
+    "kernel_release": "6.18.44-fc-v726",
+    "python_version": "3.13.18",
+    "sysctl_fs": {
+      "protected_hardlinks": 1,
+      "protected_symlinks": 0,
+      "protected_regular": 0,
+      "protected_fifos": 0
+    },
+    "setup_process_effective_capabilities": [
+      "CHOWN",
+      "DAC_OVERRIDE",
+      "FOWNER",
+      "SETGID",
+      "SETUID",
+      "LINUX_IMMUTABLE"
+    ],
+    "mounts_made_by_the_runner_before_the_fixture_started": [
+      {
+        "mount_point": "/tmp/cse227-probe-v2-variant-2gszkd5g/probe",
+        "root": "/",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "fstype": "tmpfs",
+        "source": "tmpfs",
+        "super_options": "rw,size=65536k,mode=755"
+      },
+      {
+        "mount_point": "/tmp/cse227-probe-v2-variant-2gszkd5g/fill-records",
+        "root": "/",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "fstype": "tmpfs",
+        "source": "tmpfs",
+        "super_options": "rw,size=4096k,mode=755"
+      },
+      {
+        "mount_point": "/tmp/cse227-probe-v2-variant-2gszkd5g/fill-workspace",
+        "root": "/",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "fstype": "tmpfs",
+        "source": "tmpfs",
+        "super_options": "rw,size=4096k,mode=755"
+      },
+      {
+        "mount_point": "/tmp/cse227-probe-v2-variant-2gszkd5g/effects",
+        "root": "/",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "fstype": "tmpfs",
+        "source": "tmpfs",
+        "super_options": "rw,size=4096k,mode=755"
+      }
+    ],
+    "fixture_arguments": [
+      "/home/claude/rahat15/perfect-crime/research/tools/permission_probe_v2_fixture.py",
+      "--root",
+      "/tmp/cse227-probe-v2-variant-2gszkd5g/probe",
+      "--fill-records-root",
+      "/tmp/cse227-probe-v2-variant-2gszkd5g/fill-records",
+      "--fill-workspace-root",
+      "/tmp/cse227-probe-v2-variant-2gszkd5g/fill-workspace"
+    ]
+  },
+  "coverage": {
+    "ordinary_tampering_matrix": {
+      "recorded": 240,
+      "executed": 226,
+      "not_run": 14,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 14,
+        "layout_refused_the_recorder_precondition": 0,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "legitimate_and_read_controls": {
+      "recorded": 75,
+      "executed": 75,
+      "not_run": 0,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 0,
+        "layout_refused_the_recorder_precondition": 0,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "inherited_descriptor_controls": {
+      "recorded": 135,
+      "executed": 123,
+      "not_run": 12,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 0,
+        "layout_refused_the_recorder_precondition": 12,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "suppression_of_future_records": {
+      "recorded": 45,
+      "executed": 43,
+      "not_run": 2,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 2,
+        "layout_refused_the_recorder_precondition": 0,
+        "not_executed_in_this_environment": 0
+      }
+    },
+    "total": {
+      "recorded": 495,
+      "executed": 467,
+      "not_run": 28,
+      "not_run_by_kind": {
+        "not_applicable_to_this_layout": 16,
+        "layout_refused_the_recorder_precondition": 12,
+        "not_executed_in_this_environment": 0
+      }
+    }
+  },
+  "suppression_verdict_counts": {
+    "suppression_observed": 33,
+    "no_suppression_observed": 10,
+    "not_run": 2
+  },
+  "expectation_mismatch_count": 0,
+  "protection_assessment_lists": {
+    "tampering_denied_and_proxies_kept": {
+      "holds": [
+        "sticky_1777_dir_recorder_file",
+        "sticky_1770_shared_group_dir",
+        "recorder_owned_agent_readonly",
+        "recorder_owned_no_agent_access",
+        "append_only_recorder_owned",
+        "acl_agent_read_only"
+      ],
+      "fails": [
+        "agent_owned_writable",
+        "recorder_file_agent_writable_dir",
+        "setgid_2770_shared_group_file_0640",
+        "setgid_2770_shared_group_file_0660",
+        "recorder_dir_in_agent_owned_parent",
+        "append_only_same_account",
+        "append_only_file_and_dir_same_account",
+        "immutable_recorder_owned",
+        "acl_agent_dir_write_file_read"
+      ],
+      "undetermined": []
+    },
+    "and_resists_every_suppression_operation": {
+      "holds": [],
+      "fails": [
+        "sticky_1777_dir_recorder_file",
+        "sticky_1770_shared_group_dir",
+        "recorder_owned_agent_readonly",
+        "recorder_owned_no_agent_access",
+        "append_only_recorder_owned",
+        "acl_agent_read_only"
+      ],
+      "undetermined": []
+    },
+    "and_resists_precreate_and_separate_filesystem_fill": {
+      "holds": [
+        "recorder_owned_agent_readonly",
+        "recorder_owned_no_agent_access",
+        "append_only_recorder_owned",
+        "acl_agent_read_only"
+      ],
+      "fails": [
+        "sticky_1777_dir_recorder_file",
+        "sticky_1770_shared_group_dir"
+      ],
+      "undetermined": []
+    }
+  },
+  "compare_with_committed_probe_02_evidence": {
+    "file": "compare-local-premounted.json",
+    "committed_evidence_sha256": "8e81ab4e30f86c1939e50cc2ead0a6675d6d00c616b62f993452e1924d78188a",
+    "recorded_cells": 495,
+    "executed_in_both": 467,
+    "not_run_in_both": 28,
+    "not_run_vs_measured": 0,
+    "verdict_difference_count": 0,
+    "same_coverage": true,
+    "verdicts_identical_among_cells_executed_in_both": true,
+    "same_coverage_and_identical_verdicts": true
+  },
+  "second_run": {
+    "evidence_sha256": "8c1d1664b53852b1c0f9c724baf779e6430051d2b5bb6e4aa515b15c193c392f",
+    "recorded_cells": 495,
+    "executed_in_both": 467,
+    "not_run_in_both": 28,
+    "not_run_vs_measured": 0,
+    "verdict_difference_count": 0,
+    "same_coverage": true,
+    "verdicts_identical_among_cells_executed_in_both": true,
+    "same_coverage_and_identical_verdicts": true
+  },
+  "docker_mode": {
+    "executed": false,
+    "reason": "no Docker daemon on this machine",
+    "container_tmpfs_mounts": {
+      "/probe": "rw,nosuid,nodev,noexec,size=64m,mode=0755",
+      "/probe-fill-records": "rw,nosuid,nodev,noexec,size=4m,mode=0755",
+      "/probe-fill-workspace": "rw,nosuid,nodev,noexec,size=4m,mode=0755"
+    },
+    "tmpfs_option_reasons": {
+      "rw": "the fixture must create files there",
+      "nosuid": "no set-user-ID program can gain privilege from the probe filesystems",
+      "nodev": "no device nodes",
+      "noexec": "nothing on the probe filesystems is executed (the workspace test is read by the interpreter)",
+      "size=4m": "small fixed size so the agent's fill reaches ENOSPC quickly and cannot exhaust host memory; the fixture refuses a fill root larger than 8 MiB",
+      "mode=0755": "root-owned mount root that the agent and recorder can traverse but not write"
+    },
+    "fixture_arguments": [
+      "--fill-records-root",
+      "/probe-fill-records",
+      "--fill-workspace-root",
+      "/probe-fill-workspace"
+    ]
+  }
+}

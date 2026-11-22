@@ -1,0 +1,994 @@
+{
+  "variant": "wrapper_control_tmpfs",
+  "note": "Supplementary sysctl effect controls measured by the wrapper; NOT part of the probe-02 matrix.",
+  "sysctls_during": {
+    "protected_regular": 0,
+    "protected_hardlinks": 1,
+    "protected_symlinks": 0
+  },
+  "prediction_basis": "fs.rst: protected_regular=1 refuses O_CREAT opens of regular files the opener does not own in world-writable sticky directories unless the directory owner owns the file; =2 also in group-writable sticky directories. protected_symlinks=1 refuses following a symlink in a sticky world-writable directory unless follower and link owner match or the directory owner owns the link. O_CREAT|O_EXCL fails with EEXIST on any existing name, including a symlink.",
+  "rows": [
+    {
+      "control": "regular_0666_recorder_o_creat_append",
+      "directory": "sticky_1777",
+      "what": "agent plants a world-writable regular file; recorder opens it with O_CREAT (no O_EXCL)",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 1001,
+        "mode": "0o1777",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\nrecorder-record\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "outcome": "appended_into_agent_file",
+      "predicted": "appended_into_agent_file",
+      "matches_prediction": true
+    },
+    {
+      "control": "regular_0666_recorder_append_without_o_creat",
+      "directory": "sticky_1777",
+      "what": "same file, recorder opens it WITHOUT O_CREAT (shows O_CREAT is what the sysctl keys on)",
+      "recorder_open_flags": "O_WRONLY|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 1001,
+        "mode": "0o1777",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\nrecorder-record\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "outcome": "appended_into_agent_file",
+      "predicted": "appended_into_agent_file",
+      "matches_prediction": true
+    },
+    {
+      "control": "regular_0666_recorder_o_creat_excl",
+      "directory": "sticky_1777",
+      "what": "same file, recorder insists on creating the name itself",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_EXCL|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 1001,
+        "mode": "0o1777",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "refused:EEXIST",
+        "errno": 17,
+        "identity_valid": true
+      },
+      "outcome": "refused:EEXIST",
+      "predicted": "refused:EEXIST",
+      "matches_prediction": true
+    },
+    {
+      "control": "symlink_recorder_o_creat_append",
+      "directory": "sticky_1777",
+      "what": "agent plants a symlink to a world-writable file in its workspace; recorder opens the name",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 1001,
+        "mode": "0o1777",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1777--symlink_recorder_o_creat_append/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1777--symlink_recorder_o_creat_append/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\nrecorder-record\n"
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "outcome": "appended_into_agent_file",
+      "predicted": "appended_into_agent_file",
+      "matches_prediction": true
+    },
+    {
+      "control": "symlink_recorder_o_creat_excl",
+      "directory": "sticky_1777",
+      "what": "same symlink, recorder insists on creating the name itself",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_EXCL|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 1001,
+        "mode": "0o1777",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1777--symlink_recorder_o_creat_excl/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1777--symlink_recorder_o_creat_excl/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "refused:EEXIST",
+        "errno": 17,
+        "identity_valid": true
+      },
+      "outcome": "refused:EEXIST",
+      "predicted": "refused:EEXIST",
+      "matches_prediction": true
+    },
+    {
+      "control": "regular_0666_recorder_o_creat_append",
+      "directory": "sticky_1770_shared_group",
+      "what": "agent plants a world-writable regular file; recorder opens it with O_CREAT (no O_EXCL)",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 2000,
+        "mode": "0o1770",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\nrecorder-record\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [
+          2000
+        ],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "outcome": "appended_into_agent_file",
+      "predicted": "appended_into_agent_file",
+      "matches_prediction": true
+    },
+    {
+      "control": "regular_0666_recorder_append_without_o_creat",
+      "directory": "sticky_1770_shared_group",
+      "what": "same file, recorder opens it WITHOUT O_CREAT (shows O_CREAT is what the sysctl keys on)",
+      "recorder_open_flags": "O_WRONLY|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 2000,
+        "mode": "0o1770",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\nrecorder-record\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [
+          2000
+        ],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "outcome": "appended_into_agent_file",
+      "predicted": "appended_into_agent_file",
+      "matches_prediction": true
+    },
+    {
+      "control": "regular_0666_recorder_o_creat_excl",
+      "directory": "sticky_1770_shared_group",
+      "what": "same file, recorder insists on creating the name itself",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_EXCL|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 2000,
+        "mode": "0o1770",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        },
+        "agent_file": {
+          "exists": false,
+          "errno": 2
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [
+          2000
+        ],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "refused:EEXIST",
+        "errno": 17,
+        "identity_valid": true
+      },
+      "outcome": "refused:EEXIST",
+      "predicted": "refused:EEXIST",
+      "matches_prediction": true
+    },
+    {
+      "control": "symlink_recorder_o_creat_append",
+      "directory": "sticky_1770_shared_group",
+      "what": "agent plants a symlink to a world-writable file in its workspace; recorder opens the name",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 2000,
+        "mode": "0o1770",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1770_shared_group--symlink_recorder_o_creat_append/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1770_shared_group--symlink_recorder_o_creat_append/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\nrecorder-record\n"
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [
+          2000
+        ],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "outcome": "appended_into_agent_file",
+      "predicted": "appended_into_agent_file",
+      "matches_prediction": true
+    },
+    {
+      "control": "symlink_recorder_o_creat_excl",
+      "directory": "sticky_1770_shared_group",
+      "what": "same symlink, recorder insists on creating the name itself",
+      "recorder_open_flags": "O_WRONLY|O_CREAT|O_EXCL|O_APPEND",
+      "directory_metadata": {
+        "exists": true,
+        "uid": 1001,
+        "gid": 2000,
+        "mode": "0o1770",
+        "type": "directory"
+      },
+      "before_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1770_shared_group--symlink_recorder_o_creat_excl/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        }
+      },
+      "after_recorder_open": {
+        "name": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o777",
+          "type": "symlink",
+          "symlink_target": "/tmp/cse227-probe-v2-variant-jot2ba1s/effects/sticky_1770_shared_group--symlink_recorder_o_creat_excl/workspace/agent-file.jsonl"
+        },
+        "agent_file": {
+          "exists": true,
+          "uid": 1000,
+          "gid": 1000,
+          "mode": "0o666",
+          "type": "file",
+          "content": "agent-planted\n"
+        }
+      },
+      "agent_child": {
+        "uid": [
+          1000,
+          1000,
+          1000
+        ],
+        "gid": [
+          1000,
+          1000,
+          1000
+        ],
+        "groups": [
+          2000
+        ],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "ok",
+        "errno": null,
+        "identity_valid": true
+      },
+      "recorder_child": {
+        "uid": [
+          1001,
+          1001,
+          1001
+        ],
+        "gid": [
+          1001,
+          1001,
+          1001
+        ],
+        "groups": [],
+        "status": {
+          "CapInh": "0000000000000000",
+          "CapPrm": "0000000000000000",
+          "CapEff": "0000000000000000",
+          "CapBnd": "000001fffeffffff",
+          "CapAmb": "0000000000000000",
+          "NoNewPrivs": "1",
+          "Seccomp": "0"
+        },
+        "result": "refused:EEXIST",
+        "errno": 17,
+        "identity_valid": true
+      },
+      "outcome": "refused:EEXIST",
+      "predicted": "refused:EEXIST",
+      "matches_prediction": true
+    }
+  ]
+}
