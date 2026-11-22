@@ -1,12 +1,13 @@
 # Disposable permission probe 02: evidence review
 
-Status: measured in `--mode local` only. Independent review: a reviewer re-ran this probe and
-reproduced 125 cells by hand (no committed verdict wrong, all counts reproduced); a further review
-round added the suppression, discriminating-proxy and directory-listing measurements recorded here.
-Image-matched `--mode docker` run: **not yet executed** (see "What still has to be run").
+Status: this directory holds the **local** measurements (`--mode local`, cloud sandbox VM). A teammate
+has since run the same probe in the baseline Docker image; that evidence is published separately in
+`../permission-probe-02-docker/` and is not merged into the files here (see "Docker validation and
+aggregation correction"). Independent review: an earlier reviewer re-ran this probe and reproduced 125
+cells by hand; review of the Docker package is pending per its README.
 
 `evidence.json` is exactly what `research/tools/run_permission_probe_v2.py` wrote; it was not edited.
-SHA-256 `a0df09db4be8f32cea0837dd3135d5e79b198a4cd9e73c8caf61d59af264cb29`. Design and the coded expectations: `../../analysis/permission-probe-02-design.md`.
+SHA-256 `8e81ab4e30f86c1939e50cc2ead0a6675d6d00c616b62f993452e1924d78188a`. Design and the coded expectations: `../../analysis/permission-probe-02-design.md`.
 Machine-readable summary: `../../results/permission-probe-02-summary.json`.
 
 ## Scope, and what this is not
@@ -81,7 +82,23 @@ mode/ACL check; EPERM = an ownership, sticky-bit, inode-flag, protected_hardlink
 | `acl_agent_dir_write_file_read` | D | D | D | D | E | E | D | D | E | E | D | D | E | D | E | n/a |
 <!-- END matrix -->
 
-## Totals
+## Coverage and totals
+
+Recorded cells are not all executed cells. A cell is `not_run` either because the operation has no meaning
+in the layout (n/a), because the layout itself refused the recorder the descriptor the control would pass on
+(no-fd), or because the environment could not execute it (NR). The classification comes from the recorded
+`not_run_reason`: a reason starting "not applicable:" is n/a, "the recorder identity could not open the
+descriptor" is no-fd, anything else is NR. In this local run nothing is NR.
+
+<!-- BEGIN coverage -->
+| Measurement group | Recorded | Executed | Not run | not applicable to the layout | recorder precondition refused by the layout | could not be executed in this environment |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| ordinary tampering matrix | 240 | 226 | 14 | 14 | 0 | 0 |
+| legitimate and read controls | 75 | 75 | 0 | 0 | 0 | 0 |
+| inherited descriptor controls | 135 | 123 | 12 | 0 | 12 | 0 |
+| suppression of future records | 45 | 43 | 2 | 2 | 0 | 0 |
+| total | 495 | 467 | 28 | 16 | 12 | 0 |
+<!-- END coverage -->
 
 <!-- BEGIN totals -->
 - Ordinary cells: 240. effect_observed: 53; not_run: 14; permission_denial_observed: 173.
@@ -89,6 +106,7 @@ mode/ACL check; EPERM = an ownership, sticky-bit, inode-flag, protected_hardlink
 - Harness sanity checks (same in every layout): 36.
 - Inherited-descriptor controls: 135. different_effect_observed: 14; effect_observed: 83; not_run: 12; permission_denial_observed: 26.
 - Suppression-of-future-records controls: 45. no_suppression_observed: 10; not_run: 2; suppression_observed: 33.
+- Recorded 495, executed 467, not run 28.
 - Expectation mismatches: 0.
 <!-- END totals -->
 
@@ -159,7 +177,7 @@ Tampering with existing bytes is not the only risk. `precreate_next_session_name
 creates the predictable next transcript name, then the recorder's exclusive create fails. Two `fill`
 controls: the agent fills a small dedicated tmpfs until ENOSPC, then the recorder tries to append 200
 records. `S` = suppression observed, `R` = resisted, measured by a child dropped to the recorder
-identity. The `fill` controls were measured with `fs.protected_regular=0`.
+identity. All three were measured here with `fs.protected_regular=0`.
 
 <!-- BEGIN suppression -->
 | Layout | precreate_next_session_name | fill_filesystem_then_recorder_append | fill_filesystem_then_recorder_append_separate_fs |
@@ -181,31 +199,56 @@ identity. The `fill` controls were measured with `fs.protected_regular=0`.
 | `acl_agent_dir_write_file_read` | S | S | S |
 <!-- END suppression -->
 
-## Which layouts actually protect (measured on these synthetic proxies only)
+## Which layouts protect what (three-valued; these synthetic proxies only)
 
-Layouts that denied every one of the fourteen measured tampering operations **and** kept all four
-judged proxies working:
+A layout **holds** a requirement only if every required cell was executed and gave the good verdict. It
+**fails** if an executed cell gave the bad verdict. If a required cell was not executed in this environment
+the layout is **undetermined** and is never listed as resisting, denying or suppressed. Cells that are not
+applicable to a layout are not required.
 
-<!-- BEGIN protecting -->
-- `sticky_1777_dir_recorder_file`
-- `sticky_1770_shared_group_dir`
-- `recorder_owned_agent_readonly`
-- `recorder_owned_no_agent_access`
-- `append_only_recorder_owned`
-- `acl_agent_read_only`
-<!-- END protecting -->
+<!-- BEGIN assessment -->
+**Every tampering operation denied and every judged proxy kept**
 
-Layouts that, in addition, resisted **both** fill suppression operations and precreate:
+- holds: `sticky_1777_dir_recorder_file`, `sticky_1770_shared_group_dir`, `recorder_owned_agent_readonly`, `recorder_owned_no_agent_access`, `append_only_recorder_owned`, `acl_agent_read_only`
+- fails (determined):
+  - `agent_owned_writable`: `rewrite`, `truncate`, `overwrite_in_place`, `append_marker`, `delete`, `replace`, `chmod_then_rewrite`, `rename_within_dir`, `rename_out_of_dir`, `rename_parent_dir`, `symlink_swap_file`, `symlink_swap_dir`
+  - `recorder_file_agent_writable_dir`: `delete`, `replace`, `rename_within_dir`, `rename_out_of_dir`, `symlink_swap_file`, `recorder_new_transcript`
+  - `setgid_2770_shared_group_file_0640`: `delete`, `replace`, `rename_within_dir`, `rename_out_of_dir`, `symlink_swap_file`
+  - `setgid_2770_shared_group_file_0660`: `rewrite`, `truncate`, `overwrite_in_place`, `append_marker`, `delete`, `replace`, `rename_within_dir`, `rename_out_of_dir`, `symlink_swap_file`
+  - `recorder_dir_in_agent_owned_parent`: `rename_parent_dir`, `symlink_swap_dir`
+  - `append_only_same_account`: `append_marker`, `rename_parent_dir`, `symlink_swap_dir`
+  - `append_only_file_and_dir_same_account`: `append_marker`
+  - `immutable_recorder_owned`: `recorder_append`
+  - `acl_agent_dir_write_file_read`: `delete`, `replace`, `rename_within_dir`, `rename_out_of_dir`, `symlink_swap_file`
+- undetermined: (none)
 
-<!-- BEGIN protecting_strict -->
-- (none)
-<!-- END protecting_strict -->
+**Of the layouts that hold the above: also resist every suppression operation (precreate, shared-filesystem fill, separate-filesystem fill)**
 
-The stricter list is **empty**. Every one of the six tamper-resistant layouts is defeated by the
-shared-filesystem disk-fill: whenever the records tree and the agent's workspace share one filesystem,
-the agent starves the recorder (ENOSPC) regardless of ownership or mode. Only separating filesystems
-helps (the separate-fs fill is `R` for the recorder-owned layouts), and even then the records
-filesystem needs a quota the agent cannot exhaust. Further measured qualifications:
+- holds: (none)
+- fails (determined):
+  - `sticky_1777_dir_recorder_file`: `precreate_next_session_name`, `fill_filesystem_then_recorder_append`, `fill_filesystem_then_recorder_append_separate_fs`
+  - `sticky_1770_shared_group_dir`: `precreate_next_session_name`, `fill_filesystem_then_recorder_append`, `fill_filesystem_then_recorder_append_separate_fs`
+  - `recorder_owned_agent_readonly`: `fill_filesystem_then_recorder_append`
+  - `recorder_owned_no_agent_access`: `fill_filesystem_then_recorder_append`
+  - `append_only_recorder_owned`: `fill_filesystem_then_recorder_append`
+  - `acl_agent_read_only`: `fill_filesystem_then_recorder_append`
+- undetermined: (none)
+
+**Of the layouts that hold the first: also resist precreate and the separate-filesystem fill**
+
+- holds: `recorder_owned_agent_readonly`, `recorder_owned_no_agent_access`, `append_only_recorder_owned`, `acl_agent_read_only`
+- fails (determined):
+  - `sticky_1777_dir_recorder_file`: `precreate_next_session_name`, `fill_filesystem_then_recorder_append_separate_fs`
+  - `sticky_1770_shared_group_dir`: `precreate_next_session_name`, `fill_filesystem_then_recorder_append_separate_fs`
+- undetermined: (none)
+<!-- END assessment -->
+
+In this local run every required cell was executed, so nothing is undetermined. No layout holds resistance
+to every suppression operation, and that is a determined result here: in each of the six tamper-denying
+layouts the shared-filesystem fill was executed and the recorder was starved (ENOSPC); the two sticky
+layouts additionally fail on precreate. Four layouts hold resistance to precreate and to the
+separate-filesystem fill. Separating filesystems is therefore necessary, and the records filesystem needs
+space the agent cannot exhaust. Further measured qualifications:
 
 - In both sticky layouts the agent can still create its own sibling file in the records directory
   (`create_sibling` = E), and `precreate_next_session_name` = S there.
@@ -216,8 +259,54 @@ filesystem needs a quota the agent cannot exhaust. Further measured qualificatio
   (`recorder_dir_in_agent_owned_parent`), the recorder-owned 0755/0644 directory and file were
   bypassed by renaming the directory and swapping a symlink in its place (`rename_parent_dir` = E,
   `symlink_swap_dir` = E): ancestors must be protected too.
-- The six protecting layouts rely on the recorder being a different account; with a shared account
-  (`agent_owned_writable`) every tampering operation succeeded.
+- The six tamper-denying layouts rely on the recorder being a different account; with a shared account
+  (`agent_owned_writable`) every applicable tampering operation succeeded.
+
+## Docker validation and aggregation correction
+
+What the teammate measured (their files, not re-measured here): `../permission-probe-02-docker/README.md`,
+`../permission-probe-02-docker/coverage-assessment.json` and the evidence inside
+`../permission-probe-02-docker/validation-originals.zip`. They ran this probe unchanged at commit a329127
+with `--mode docker` in the baseline image. Their README reports 495 recorded cells, 439 executed and 56
+not run; no verdict difference among the 439 cells executed in both environments; 28 cells not run in
+either; and 28 cells (the disk-fill controls) not run in Docker but measured locally. Docker mode cannot
+mount the dedicated fill filesystems, so both fill operations are not run there for every layout. The
+environment differences (kernel, Python, filesystem mix and several `fs.protected_*` settings) are listed in
+their README and recorded in their evidence; they are not restated here.
+
+The bug they found was in this runner's aggregation, not in the measurements. The summary written at
+a329127 computed "layouts also resisting both suppression operations" after dropping `not_run` cells, so a
+layout whose fill cells were never executed was listed as resisting whenever its one executed suppression
+cell (precreate) was resisted. For the Docker run that listed four layouts
+(`recorder_owned_agent_readonly`, `recorder_owned_no_agent_access`, `append_only_recorder_owned`,
+`acl_agent_read_only`) as resisting. That is unsupported: for those four, resistance to the fill operations
+is **undetermined in Docker**. Any summary generated by the a329127 runner overstates suppression resistance
+wherever disk-fill cells were not run; this includes the archived Docker `summary.json` and the summary of
+the earlier local ext4 run. The same filter also silently dropped `not_run` tampering cells and treated a
+`not_run` proxy as failed; neither occurred in the committed evidence, but both are fixed.
+
+Corrections in this revision (runner `protection_assessment`, `coverage`, `compare`):
+
+- Layout lists are three-valued (holds / fails / undetermined, with the missing cells named), for the
+  tampering list, the proxy list and the suppression lists.
+- Every summary carries recorded / executed / not-run counts per measurement group, split by why a cell was
+  not run.
+- `--compare` reports executed-in-both, not-run-in-both, not-run-versus-measured and verdict differences
+  among cells executed in both. The former `identical_verdicts` flag, which was true even when coverage
+  differed, is replaced by `verdicts_identical_among_cells_executed_in_both`, `same_coverage` and
+  `same_coverage_and_identical_verdicts`. Exit status 3 means coverage differs although verdicts agree.
+- Applied to the teammate's archived Docker evidence (read-only, in the regression tests), the corrected
+  aggregation gives: the same six tamper-denying layouts; **no** layout holding resistance to every
+  suppression operation; the two sticky layouts failing it (precreate suppression was executed and
+  observed); and the four layouts above undetermined, missing both fill cells. Comparing the local evidence
+  here with the Docker evidence gives 439 executed in both, 28 not run in both, 28 not run versus measured,
+  0 verdict differences, coverage not the same.
+
+The local disk-fill results in this directory remain results of this local environment. They are not Docker
+results, and the Docker run neither confirms nor contradicts them. The measurements themselves did not
+change in this revision: the evidence files here were regenerated because the runner's sha256 is recorded
+in them, and each regenerated file was compared with the previously committed one (same coverage, zero
+verdict differences on all 495 recorded cells).
 
 ## Inherited-descriptor controls
 
@@ -291,38 +380,41 @@ python3 research/tools/run_permission_probe_v2.py --mode local --evidence /tmp/r
 python3 research/tools/run_permission_probe_v2.py --compare research/reviews/permission-probe-02/evidence.json /tmp/run2.json
 ```
 
-The comparison reported `identical_verdicts: true` over all 495 measurements (verdict, outcome and errno;
-inode numbers, paths and timestamps differ between runs) and `environment_identical: true`. `--compare`
-prints the two environments side by side and reports not_run-vs-measured differences separately from
-verdict differences. Two committed variants are referenced below. After each run `mount | grep -i probe`
-was empty and no probe directory remained (the fixture runs under a private mount namespace with
-PR_SET_PDEATHSIG, and the runner installs a SIGTERM handler, so an interrupted run leaks nothing).
+A repeat run compared with `evidence.json`: 467 cells executed in both, 28 not run in both, 0 not run versus
+measured, 0 verdict differences among cells executed in both, same coverage (exit status 0). The comparison
+covers verdict, outcome and errno; inode numbers, paths and timestamps differ between runs. After each run
+`mount | grep -i probe` was empty and no probe directory remained (the fixture runs under a private mount
+namespace with PR_SET_PDEATHSIG, and the runner installs a SIGTERM handler).
 
 ## Committed supplementary runs
 
 - `evidence-ext4.json` (+ `compare-ext4.json`): the general layouts run on an ext4 scratch directory
-  instead of tmpfs (`--local-scratch-parent /tmp`). Identical **verdicts**; the 28 fill cells are
-  `not_run` there because that mode provides no dedicated size-limited tmpfs, which `compare-ext4.json`
-  records under `not_run_vs_measured_differences`.
+  instead of tmpfs (`--local-scratch-parent /tmp`). 439 cells executed in both files with 0 verdict
+  differences; 28 not run in both; **28 fill cells measured in `evidence.json` but not executed in the ext4
+  run** (that mode provides no dedicated size-limited tmpfs), so coverage is not the same (`--compare` exit
+  status 3) and, for the ext4 run on its own, resistance to the fill operations is undetermined. The variant
+  `ext4_scratch_with_fill` in `../permission-probe-02-variants/` measures those cells on ext4.
 - `evidence-full-root-setup.json` (+ `compare-full-root-setup.json`): the setup process keeps root's
-  full capability set (`--full-root-setup`). Fully identical verdicts; only the recorded setup
-  capabilities differ.
+  full capability set (`--full-root-setup`). Same coverage and 0 verdict differences; only the recorded
+  setup capabilities differ.
 
-## What still has to be run
+## What was run where, and what remains
 
-`--mode docker` is implemented and its command construction, inspection checks and cleanup are unit
-tested with mocks, but it has **never been executed**: this machine has no Docker daemon. A teammate with
-the baseline image must run, from the repository root:
+- Local mode (this directory): all 467 executable cells, including the disk-fill controls.
+- Docker mode in the baseline image: run by a teammate, published in `../permission-probe-02-docker/`;
+  439 cells executed, the disk-fill controls not executed. This machine has no Docker daemon, so docker
+  mode was not executed here; its command construction and cleanup are unit tested with mocks.
+- Not yet measured anywhere: the disk-fill controls inside the baseline image (they need dedicated small
+  filesystems that the unprivileged container cannot mount), and anything on the native harness.
+
+To repeat the Docker run and compare it with this evidence:
 
 ```
 python3 research/tools/run_permission_probe_v2.py --mode docker --evidence <new path> --summary <new path>
 python3 research/tools/run_permission_probe_v2.py --compare research/reviews/permission-probe-02/evidence.json <new path>
 ```
 
-It defaults to probe 01's image id (`sha256:eddc3b19...`) and never pulls. On a kernel whose tmpfs lacks
-inode-flag support the four flag layouts become `not_run`; the runner prints that explicitly. The fill
-controls need dedicated small tmpfs mounts, which the unprivileged container cannot create, so in docker
-mode they are `not_run` with a reason - the fill results stand on the local run only.
+The runner prints the coverage and, beside every layout list, the layouts that are undetermined.
 
 ## Limitations
 
@@ -335,13 +427,13 @@ mode they are `not_run` with a reason - the fill results stand on the local run 
 - Availability (disk exhaustion, name pre-creation) is only partly a permissions question; the fill
   result depends on filesystem layout and per-filesystem quotas, and the probe's ENOSPC timing is its
   small tmpfs, not production.
-- `precreate` was measured with `fs.protected_regular=0`; `protected_regular=1`/`2` may refuse the
-  recorder's `O_CREAT|O_APPEND` onto an agent-owned file in a sticky directory, which this run did not
-  exercise.
+- `precreate` was measured here with `fs.protected_regular=0`. The fallback step it could affect is refused
+  by the file mode first, so the matrix does not show that sysctl's effect (see the variants directory).
 - For recorder-owned flag layouts the hard-link EPERM cannot be attributed to the sysctl or the flag
   separately; the same-account append-only layouts attribute it to the flag.
-- One kernel, tmpfs plus a committed ext4 cross-check, a non-image environment. overlayfs, bind volumes,
-  user namespaces, rootless Docker, LSMs and idmapped mounts were not measured.
+- The files here are from one kernel in a non-image environment (tmpfs plus an ext4 cross-check); the
+  baseline-image run is the teammate's package and lacks the disk-fill cells. User namespaces, rootless
+  Docker, LSMs and idmapped mounts were not measured.
 - Only UID/GID 1000 without capabilities was tested as the agent.
 - Row verdicts rest on snapshots taken by the trusted setup process; a measurement by the probe, not an
   independent forensic audit.

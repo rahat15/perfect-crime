@@ -8,7 +8,9 @@ Modes
                   The setup process is restricted to docker mode's capability set unless --full-root-setup.
 
 Utilities
-  --compare A B          Compare the verdicts of two evidence files (reproducibility check).
+  --compare A B          Compare two evidence files: coverage (executed in both, not run in both, not run
+                         versus measured) and verdicts among the cells executed in both. Exit status 0 = same
+                         coverage and identical verdicts, 1 = a verdict differs, 3 = coverage differs only.
   --render-tables FILE   Print the Markdown tables derived from an evidence file.
 
 No model call, credential, network access or host bind mount is used. Standard library only.
@@ -94,9 +96,195 @@ def command(args, **kwargs):
 
 # ---------------------------------------------------------------- derived views (pure functions)
 
+# Why a cell was not run. Derived from the recorded not_run_reason, whose producers in the fixture are:
+#   "not applicable: ..."                       the operation has no meaning in this layout (not_applicable_reason,
+#                                               suppression_not_applicable_reason)
+#   "the recorder identity could not open ..."  the layout itself refused the recorder the descriptor that the
+#                                               control would have passed on (an executed, refused precondition)
+#   anything else                               the environment could not execute the cell: a missing filesystem
+#                                               feature, no dedicated fill filesystem, a fixture setup failure
+# A missing or unrecognised reason is treated as "could not be executed", the conservative reading.
+NOT_APPLICABLE = "not_applicable_to_this_layout"
+PRECONDITION_REFUSED = "layout_refused_the_recorder_precondition"
+NOT_EXECUTED = "not_executed_in_this_environment"
+HOLDS, FAILS, UNDETERMINED, NO_CELL = "holds", "fails", "undetermined", "no_applicable_cell"
+GROUPS = (("ordinary_tampering_matrix", "rows", "operation", "op"),
+          ("legitimate_and_read_controls", "legit_controls", "control", "legit"),
+          ("inherited_descriptor_controls", "descriptor_controls", "control", "fd"),
+          ("suppression_of_future_records", "suppression_controls", "operation", "suppress"))
+SUPPRESSION_SETS = {
+    "and_resists_every_suppression_operation": tuple(fixture.SUPPRESSION_OPERATIONS),
+    "and_resists_precreate_and_separate_filesystem_fill": tuple(
+        name for name in fixture.SUPPRESSION_OPERATIONS if name != "fill_filesystem_then_recorder_append"),
+}
+ASSESSMENT_RULE = (
+    "Three-valued. A layout HOLDS a requirement only if every required cell was executed and gave the good "
+    "verdict. It FAILS if at least one required cell was executed and gave the bad verdict (a tampering effect, a "
+    "denied proxy, an observed suppression); that is a determined result even if other cells are missing. "
+    "Otherwise, if any required cell was not executed in this environment or ended in unexpected_error, the layout "
+    "is UNDETERMINED and the missing cells are named. Cells that are not applicable to the layout are not required. "
+    "Undetermined is never reported as resisted, denied, kept or suppressed.")
+
+
+def row_verdict(row):
+    return row["verdict"] if "verdict" in row else row["outcome"]
+
+
+def not_run_kind(row):
+    """None for an executed cell; otherwise why it was not run, from the recorded reason."""
+    if row_verdict(row) != fixture.N:
+        return None
+    reason = row.get("not_run_reason") or ""
+    if reason.startswith("not applicable:"):
+        return NOT_APPLICABLE
+    if reason.startswith("the recorder identity could not open the descriptor"):
+        return PRECONDITION_REFUSED
+    return NOT_EXECUTED
+
+
+def coverage(observations):
+    """Recorded / executed / not_run per measurement group, with the not_run cells split by kind."""
+    result, total = {}, Counter()
+    for name, key, _, _ in GROUPS:
+        rows = observations.get(key, [])
+        kinds = Counter(not_run_kind(row) for row in rows)
+        executed = kinds.pop(None, 0)
+        entry = {"recorded": len(rows), "executed": executed, "not_run": len(rows) - executed,
+                 "not_run_by_kind": {kind: kinds.get(kind, 0)
+                                     for kind in (NOT_APPLICABLE, PRECONDITION_REFUSED, NOT_EXECUTED)}}
+        result[name] = entry
+        for field in ("recorded", "executed", "not_run"):
+            total[field] += entry[field]
+        for kind, count in entry["not_run_by_kind"].items():
+            total[kind] += count
+    result["total"] = {"recorded": total["recorded"], "executed": total["executed"], "not_run": total["not_run"],
+                       "not_run_by_kind": {kind: total[kind]
+                                           for kind in (NOT_APPLICABLE, PRECONDITION_REFUSED, NOT_EXECUTED)}}
+    return result
+
+
+def _requirement(cells, judge):
+    """cells: [(cell name, row)]. judge(row) -> True (good), False (bad) or None (executed, not interpretable)."""
+    satisfied, failing, missing, not_applicable = [], [], [], []
+    for name, row in cells:
+        kind = not_run_kind(row)
+        if kind == NOT_APPLICABLE:
+            not_applicable.append(name)
+        elif kind is not None:
+            missing.append({"cell": name, "why": kind, "reason": row.get("not_run_reason")})
+        else:
+            verdict = judge(row)
+            if verdict is True:
+                satisfied.append(name)
+            elif verdict is False:
+                failing.append(name)
+            else:
+                missing.append({"cell": name, "why": "executed_but_" + str(row_verdict(row)),
+                                "reason": row.get("verdict_reason")})
+    status = (FAILS if failing else UNDETERMINED if missing else HOLDS if satisfied else NO_CELL)
+    return {"status": status, "satisfied": satisfied, "failing": failing, "missing": missing,
+            "not_applicable": not_applicable}
+
+
+def _tamper_judge(row):
+    return {fixture.D: True, fixture.E: False, fixture.X: False}.get(row["verdict"])
+
+
+def _proxy_judge(row):
+    if row.get("passed") is True:
+        return True
+    return False if row["outcome"] == "permission_denied" else None
+
+
+def _suppression_judge(row):
+    return {fixture.NOSUP: True, fixture.S: False}.get(row["verdict"])
+
+
+def assess_layouts(observations):
+    """Per layout, the three-valued status of each requirement, with the cells behind it."""
+    result = {}
+    for case in observations["layouts"]:
+        tampering = [("op/%s/%s" % (case, row["operation"]), row) for row in observations["rows"]
+                     if row["case"] == case
+                     and row.get("counts_as_tampering", row["operation"] in fixture.TAMPERING_OPERATIONS)]
+        judged = [("legit/%s/%s" % (case, row["control"]), row) for row in observations["legit_controls"]
+                  if row["case"] == case and row["judged"]]
+        discriminating = [(name, row) for name, row in judged if row.get("layout_discriminating") is True]
+        entry = {"tampering_denied": _requirement(tampering, _tamper_judge),
+                 "judged_proxies_kept": _requirement(judged, _proxy_judge),
+                 "discriminating_proxies_kept": _requirement(discriminating, _proxy_judge)}
+        for row in observations.get("suppression_controls", []):
+            if row["case"] == case:
+                entry["resists:" + row["operation"]] = _requirement(
+                    [("suppress/%s/%s" % (case, row["operation"]), row)], _suppression_judge)
+        result[case] = entry
+    return result
+
+
+def combine(assessment, requirements):
+    """Conjunction of requirements for one layout: fails beats undetermined beats holds."""
+    parts = [assessment.get(name, {"status": UNDETERMINED, "satisfied": [], "failing": [], "not_applicable": [],
+                                   "missing": [{"cell": name, "why": "not_recorded", "reason": None}]})
+             for name in requirements]
+    failing = [cell for part in parts for cell in part["failing"]]
+    missing = [item for part in parts for item in part["missing"]]
+    satisfied = [cell for part in parts for cell in part["satisfied"]]
+    status = FAILS if failing else UNDETERMINED if missing or not satisfied else HOLDS
+    return {"status": status, "failing": failing, "missing": missing, "satisfied": satisfied}
+
+
+def _three_lists(assessments, cases, requirements):
+    lists = {HOLDS: [], FAILS: [], UNDETERMINED: []}
+    for case in cases:
+        verdict = combine(assessments[case], requirements)
+        if verdict["status"] == HOLDS:
+            lists[HOLDS].append(case)
+        elif verdict["status"] == FAILS:
+            lists[FAILS].append({"layout": case, "failing_cells": verdict["failing"],
+                                 "cells_not_executed": [item["cell"] for item in verdict["missing"]]})
+        else:
+            lists[UNDETERMINED].append({"layout": case, "missing_cells": verdict["missing"],
+                                        "executed_and_good": verdict["satisfied"]})
+    return lists
+
+
+def protection_assessment(observations, proxies="judged_proxies_kept"):
+    """The layout lists, three-valued. proxies: 'judged_proxies_kept' or 'discriminating_proxies_kept'."""
+    assessments = assess_layouts(observations)
+    cases = list(observations["layouts"])
+    base = _three_lists(assessments, cases, ("tampering_denied", proxies))
+    result = {"rule": ASSESSMENT_RULE, "proxy_requirement": proxies,
+              "per_layout_status": {case: {name: part["status"] for name, part in assessments[case].items()}
+                                    for case in cases},
+              "tampering_denied_and_proxies_kept": base}
+    for name, operations in SUPPRESSION_SETS.items():
+        lists = _three_lists(assessments, base[HOLDS], tuple("resists:" + operation for operation in operations))
+        lists["evaluated_for"] = "layouts in tampering_denied_and_proxies_kept.holds"
+        lists["required_operations"] = list(operations)
+        result[name] = lists
+    return result
+
+
+def protecting_layouts(observations):
+    """Layouts that HOLD 'every tampering operation denied and every judged proxy kept' (never undetermined)."""
+    return protection_assessment(observations)["tampering_denied_and_proxies_kept"][HOLDS]
+
+
+def protecting_and_suppression_resistant_layouts(observations):
+    """Of those, the layouts that HOLD resistance to every suppression operation; see protection_assessment()
+    for the layouts that fail it and the layouts for which it is undetermined."""
+    return protection_assessment(observations)["and_resists_every_suppression_operation"][HOLDS]
+
+
+def discriminating_legit_rows(observations):
+    return [row for row in observations["legit_controls"]
+            if row["outcome"] != fixture.N and row.get("layout_discriminating") is True]
+
+
 def _cell(row):
-    if row["verdict"] == fixture.N:
-        code = "NR" if row["matches_expectation"] is None else "n/a"
+    kind = not_run_kind(row)
+    if kind is not None:
+        code = {NOT_APPLICABLE: "n/a", PRECONDITION_REFUSED: "no-fd", NOT_EXECUTED: "NR"}[kind]
     else:
         code = SHORT[row["verdict"]]
     return code + ("!" if row["matches_expectation"] is False else "")
@@ -114,8 +302,6 @@ def _legit_cell(row):
 
 def _descriptor_cell(row):
     code = _cell(row)
-    if row["verdict"] == fixture.N and row.get("descriptor", {}).get("obtained") is False:
-        code = code.replace("n/a", "no-fd")
     if row["verdict"] == fixture.X:
         code = code.replace("X", "X(" + str(row.get("outcome")) + ")")
     if row["control"] == "dirfd_listdir" and row["verdict"] == fixture.E:
@@ -124,44 +310,12 @@ def _descriptor_cell(row):
 
 
 def _suppression_cell(row):
-    if row["verdict"] == fixture.N:
-        code = "NR" if row["matches_expectation"] is None else "n/a"
+    kind = not_run_kind(row)
+    if kind is not None:
+        code = "n/a" if kind == NOT_APPLICABLE else "NR"
     else:
         code = {fixture.S: "S", fixture.NOSUP: "R", fixture.UNEXPECTED: "ERR"}.get(row["verdict"], "ERR")
     return code + ("!" if row["matches_expectation"] is False else "")
-
-
-def _denies_tampering_and_keeps_proxies(observations, case):
-    tampering = [row for row in observations["rows"] if row["case"] == case
-                 and row.get("counts_as_tampering", row["operation"] in fixture.TAMPERING_OPERATIONS)
-                 and row["verdict"] != fixture.N]
-    judged = [row for row in observations["legit_controls"] if row["case"] == case and row["judged"]]
-    return (tampering and all(row["verdict"] == fixture.D for row in tampering)
-            and judged and all(row.get("passed") is True for row in judged))
-
-
-def _resists_suppression(observations, case):
-    suppression = [row for row in observations.get("suppression_controls", []) if row["case"] == case
-                   and row["verdict"] != fixture.N]
-    return bool(suppression) and all(row["verdict"] == fixture.NOSUP for row in suppression)
-
-
-def protecting_layouts(observations):
-    """Layouts whose measured tampering operations were all denied and whose judged proxies all passed."""
-    return [case for case in observations["layouts"]
-            if _denies_tampering_and_keeps_proxies(observations, case)]
-
-
-def protecting_and_suppression_resistant_layouts(observations):
-    """Also resist both measured suppression-of-future-records operations."""
-    return [case for case in observations["layouts"]
-            if _denies_tampering_and_keeps_proxies(observations, case)
-            and _resists_suppression(observations, case)]
-
-
-def discriminating_legit_rows(observations):
-    return [row for row in observations["legit_controls"]
-            if row["outcome"] != fixture.N and row.get("layout_discriminating") is True]
 
 
 def summarize(evidence):
@@ -200,14 +354,13 @@ def summarize(evidence):
                       "expected": row["expected"], "measured": row["verdict"]}
                      for row in suppression if row["matches_expectation"] is False])
     not_run = Counter()
-    for kind, group, key in (("operation", rows, "verdict"), ("legit_control", legit, "outcome"),
-                             ("descriptor_control", descriptors, "verdict"),
-                             ("suppression_control", suppression, "verdict")):
+    for kind, group in (("operation", rows), ("legit_control", legit), ("descriptor_control", descriptors),
+                        ("suppression_control", suppression)):
         for row in group:
-            if row[key] == fixture.N:
-                not_run[(kind, row["not_run_reason"])] += 1
-    protecting = protecting_layouts(observations)
-    protecting_strict = protecting_and_suppression_resistant_layouts(observations)
+            if not_run_kind(row) is not None:
+                not_run[(kind, not_run_kind(row), row.get("not_run_reason"))] += 1
+    assessment = protection_assessment(observations)
+    holding = assessment["tampering_denied_and_proxies_kept"][HOLDS]
     environment = observations["environment"]
     return {
         "protocol": observations["protocol"], "scope": observations["scope"], "mode": run["mode"],
@@ -225,6 +378,11 @@ def summarize(evidence):
                                                       for name, value in item["features"].items()}}
                                         for item in environment["probe_roots"]]},
         "layout_count": len(observations["layouts"]), "operation_count": len(observations["operation_definitions"]),
+        "coverage": coverage(observations),
+        "not_run_classification": "From the recorded not_run_reason: a reason starting 'not applicable:' is "
+                                  "not applicable to the layout; 'the recorder identity could not open the "
+                                  "descriptor' is a precondition the layout itself refused; every other reason "
+                                  "(or none) means the cell could not be executed in this environment.",
         "ordinary_cell_count": len(rows), "ordinary_verdict_counts": dict(Counter(row["verdict"] for row in rows)),
         "legit_control_count": len(legit),
         "judged_legit_outcome_counts": dict(Counter(row["outcome"] for row in legit if row["judged"])),
@@ -239,15 +397,18 @@ def summarize(evidence):
         "suppression_control_count": len(suppression),
         "suppression_verdict_counts": dict(Counter(row["verdict"] for row in suppression)),
         "cases": cases,
-        "layouts_denying_all_measured_tampering_and_passing_all_judged_proxies": protecting,
-        "layouts_also_resisting_both_suppression_operations": protecting_strict,
-        "side_effect_operations_in_those_layouts": {
+        "protection_assessment": assessment,
+        "superseded_fields": "Summaries written by the runner at commit a329127 carried "
+                             "'layouts_also_resisting_both_suppression_operations', computed after dropping "
+                             "not_run cells; it overstated resistance wherever disk-fill cells were not run. It is "
+                             "replaced by protection_assessment, which is three-valued.",
+        "side_effect_operations_in_tamper_denying_layouts": {
             case: {row["operation"]: row["verdict"] for row in rows
                    if row["case"] == case and row["operation"] in fixture.SIDE_EFFECT_OPERATIONS}
-            for case in protecting},
+            for case in holding},
         "expectation_mismatch_count": len(mismatches), "expectation_mismatches": mismatches,
-        "not_run": [{"kind": kind, "count": count, "reason": reason}
-                    for (kind, reason), count in sorted(not_run.items())],
+        "not_run": [{"kind": kind, "why": why, "count": count, "reason": reason}
+                    for (kind, why, reason), count in sorted(not_run.items(), key=lambda item: str(item[0]))],
         "all_evaluated_observations_match_expectation":
             observations["all_evaluated_observations_match_expectation"],
         "cleanup_verified": run["cleanup_verified"], "model_calls": 0, "native_agent_integration_tested": False,
@@ -260,14 +421,60 @@ def summarize(evidence):
             "Inherited-descriptor controls pass a descriptor deliberately; whether a real harness leaks one "
             "to tool processes is unknown.",
             "Results depend on kernel, filesystem and sysctls (fs.protected_hardlinks, fs.protected_regular); "
-            "local-mode results are not image-matched and must be re-measured with --mode docker in the "
-            "baseline image.",
+            "a result from one environment is not a result for another, and cells not executed in an "
+            "environment are undetermined there.",
             "Disk-exhaustion suppression depends on the filesystem layout and per-filesystem quotas; the probe "
-            "fills small dedicated tmpfs mounts, so its ENOSPC timing is not the production filesystem's.",
-            "The precreate control was measured with fs.protected_regular=0; with protected_regular=1 or 2 the "
-            "recorder's O_CREAT|O_APPEND open onto an agent-owned file in a sticky world-writable directory can "
-            "itself be refused, which this run did not exercise.",
+            "fills small dedicated tmpfs mounts, so its ENOSPC timing is not the production filesystem's. In "
+            "docker mode the fill controls are not executed at all.",
+            "The precreate control's fallback step is refused by the file mode before fs.protected_regular is "
+            "consulted, so the probe matrix does not show that sysctl's effect.",
         ]}
+
+
+def _assessment_lines(title, lists):
+    def names(items):
+        return ", ".join("`%s`" % item for item in items) or "(none)"
+    lines = ["**%s**" % title, "", "- holds: " + names(lists[HOLDS])]
+    if lists[FAILS]:
+        lines.append("- fails (determined):")
+        lines += ["  - `%s`: %s" % (item["layout"], ", ".join("`%s`" % cell.split("/", 2)[2]
+                                                             for cell in item["failing_cells"]))
+                  for item in lists[FAILS]]
+    else:
+        lines.append("- fails (determined): (none)")
+    if lists[UNDETERMINED]:
+        lines.append("- undetermined (required cells not executed here):")
+        lines += ["  - `%s`: missing %s" % (item["layout"], ", ".join(
+            "`%s`" % missing["cell"].split("/", 2)[2] for missing in item["missing_cells"]))
+            for item in lists[UNDETERMINED]]
+    else:
+        lines.append("- undetermined: (none)")
+    return lines
+
+
+def render_assessment(assessment):
+    lines = _assessment_lines("Every tampering operation denied and every judged proxy kept",
+                              assessment["tampering_denied_and_proxies_kept"])
+    lines += [""] + _assessment_lines(
+        "Of the layouts that hold the above: also resist every suppression operation "
+        "(precreate, shared-filesystem fill, separate-filesystem fill)",
+        assessment["and_resists_every_suppression_operation"])
+    lines += [""] + _assessment_lines(
+        "Of the layouts that hold the first: also resist precreate and the separate-filesystem fill",
+        assessment["and_resists_precreate_and_separate_filesystem_fill"])
+    return "\n".join(lines)
+
+
+def render_coverage(table):
+    lines = ["| Measurement group | Recorded | Executed | Not run | not applicable to the layout | "
+             "recorder precondition refused by the layout | could not be executed in this environment |",
+             "| --- | ---: | ---: | ---: | ---: | ---: | ---: |"]
+    for name, entry in table.items():
+        kinds = entry["not_run_by_kind"]
+        lines.append("| %s | %d | %d | %d | %d | %d | %d |" % (
+            name.replace("_", " "), entry["recorded"], entry["executed"], entry["not_run"],
+            kinds[NOT_APPLICABLE], kinds[PRECONDITION_REFUSED], kinds[NOT_EXECUTED]))
+    return "\n".join(lines)
 
 
 def render_tables(evidence):
@@ -302,6 +509,7 @@ def render_tables(evidence):
              + "; ".join("%s: %d" % item for item in sorted(summary["descriptor_verdict_counts"].items())) + ".",
              "Suppression-of-future-records controls: %d. " % summary["suppression_control_count"]
              + "; ".join("%s: %d" % item for item in sorted(summary["suppression_verdict_counts"].items())) + ".",
+             "Recorded %(recorded)d, executed %(executed)d, not run %(not_run)d." % summary["coverage"]["total"],
              "Expectation mismatches: %d." % summary["expectation_mismatch_count"]]
     return {
         "matrix": table(operations, observations["rows"], "operation", operations, _cell),
@@ -312,13 +520,9 @@ def render_tables(evidence):
                              _descriptor_cell),
         "suppression": table(suppression_ops, observations["suppression_controls"], "operation",
                              suppression_ops, _suppression_cell),
+        "coverage": render_coverage(summary["coverage"]),
         "totals": "\n".join("- " + line for line in lines),
-        "protecting": "\n".join("- `%s`" % case for case in
-                                summary["layouts_denying_all_measured_tampering_and_passing_all_judged_proxies"])
-                      or "- (none)",
-        "protecting_strict": "\n".join("- `%s`" % case for case in
-                                       summary["layouts_also_resisting_both_suppression_operations"])
-                             or "- (none)"}
+        "assessment": render_assessment(summary["protection_assessment"])}
 
 
 def verdict_signature(evidence):
@@ -340,6 +544,17 @@ def verdict_signature(evidence):
     return signature
 
 
+def not_run_kinds(evidence):
+    """cell -> why it was not run (only for cells that were not run)."""
+    observations, result = evidence["observations"], {}
+    for _, key, name_key, prefix in GROUPS:
+        for row in observations.get(key, []):
+            kind = not_run_kind(row)
+            if kind is not None:
+                result["%s/%s/%s" % (prefix, row["case"], row[name_key])] = kind
+    return result
+
+
 def _env_facts(evidence):
     env = evidence["observations"]["environment"]
     return {"kernel_release": env["kernel_release"], "python_version": env["python_version"],
@@ -350,23 +565,39 @@ def _env_facts(evidence):
 
 
 def compare(first, second):
+    """Coverage first, verdicts second. Verdicts are compared only among cells executed in BOTH files."""
     one, two = verdict_signature(first), verdict_signature(second)
-    keys = set(one) | set(two)
-    changed = sorted(key for key in keys if one.get(key) != two.get(key))
-    # Split a bare not_run<->measured change from a real verdict change, so they are reported apart.
-    not_run_vs_measured = [key for key in changed
-                           if fixture.N in (one.get(key, [None])[0], two.get(key, [None])[0])]
-    verdict_differences = [key for key in changed if key not in not_run_vs_measured]
+    skipped_one, skipped_two = not_run_kinds(first), not_run_kinds(second)
+    keys = sorted(set(one) | set(two))
+    both = [key for key in keys if key in one and key in two and key not in skipped_one and key not in skipped_two]
+    neither = [key for key in keys if key in skipped_one and key in skipped_two]
+    only_first = [key for key in keys if key in one and key not in skipped_one
+                  and (key in skipped_two or key not in two)]
+    only_second = [key for key in keys if key in two and key not in skipped_two
+                   and (key in skipped_one or key not in one)]
+    differing = [key for key in both if one[key] != two[key]]
+    reason_kind_differs = [key for key in neither if skipped_one[key] != skipped_two[key]]
     first_env, second_env = _env_facts(first), _env_facts(second)
-    env_fields = sorted(set(first_env) | set(second_env))
     environment = {field: {"a": first_env.get(field), "b": second_env.get(field),
-                           "same": first_env.get(field) == second_env.get(field)} for field in env_fields}
-    return {"compared_measurements": len(keys), "environment": environment,
-            "environment_identical": all(item["same"] for item in environment.values()),
-            "verdict_differences": verdict_differences,
-            "not_run_vs_measured_differences": not_run_vs_measured,
-            "identical": not changed,
-            "identical_verdicts": not verdict_differences}
+                           "same": first_env.get(field) == second_env.get(field)}
+                   for field in sorted(set(first_env) | set(second_env))}
+    same_coverage = not only_first and not only_second and not reason_kind_differs
+    return {
+        "recorded_cells": len(keys),
+        "coverage": {"a": coverage(first["observations"]), "b": coverage(second["observations"])},
+        "executed_in_both": len(both), "not_run_in_both": len(neither),
+        "not_run_vs_measured": len(only_first) + len(only_second),
+        "executed_only_in_a": only_first, "executed_only_in_b": only_second,
+        "not_run_in_both_for_different_kinds_of_reason": reason_kind_differs,
+        "verdict_differences_among_executed_in_both": differing,
+        "verdict_difference_count": len(differing),
+        "same_coverage": same_coverage,
+        "verdicts_identical_among_cells_executed_in_both": not differing,
+        "same_coverage_and_identical_verdicts": same_coverage and not differing,
+        "environment": environment,
+        "environment_identical": all(item["same"] for item in environment.values()),
+        "note": "A cell not run in either file contributes no verdict agreement. 'verdicts identical' speaks only "
+                "about the cells executed in both files; it is not a statement about coverage."}
 
 
 # ---------------------------------------------------------------- docker mode
@@ -630,6 +861,34 @@ def save(path, text, overwrite):
     temporary.replace(path)
 
 
+def print_coverage_and_assessment(summary, out=None):
+    """Coverage, then every layout list WITH its fails and undetermined lists beside it."""
+    def show(*parts):
+        print(*parts, file=out or sys.stdout)
+
+    total = summary["coverage"]["total"]
+    show("Coverage: recorded %d, executed %d, not run %d (%d not applicable to the layout, %d recorder "
+         "precondition refused by the layout, %d COULD NOT BE EXECUTED in this environment)" % (
+             total["recorded"], total["executed"], total["not_run"], total["not_run_by_kind"][NOT_APPLICABLE],
+             total["not_run_by_kind"][PRECONDITION_REFUSED], total["not_run_by_kind"][NOT_EXECUTED]))
+    for item in summary["not_run"]:
+        if item["why"] == NOT_EXECUTED:
+            show("  NOT EXECUTED HERE: %d %s cells: %s" % (item["count"], item["kind"], item["reason"]))
+    assessment = summary["protection_assessment"]
+    for title, key in (("Tampering denied and judged proxies kept", "tampering_denied_and_proxies_kept"),
+                       ("  of those, also resist every suppression operation",
+                        "and_resists_every_suppression_operation"),
+                       ("  of those, also resist precreate and the separate-filesystem fill",
+                        "and_resists_precreate_and_separate_filesystem_fill")):
+        lists = assessment[key]
+        show(title + ":")
+        show("    holds:", lists[HOLDS])
+        show("    fails (determined):", [item["layout"] for item in lists[FAILS]])
+        show("    UNDETERMINED (required cells not executed here):",
+             {item["layout"]: [missing["cell"].split("/", 2)[2] for missing in item["missing_cells"]]
+              for item in lists[UNDETERMINED]})
+
+
 def execute(arguments):
     started = now()
     hashes = {"fixture_sha256": sha(ROOT / FIXTURE), "runner_sha256": sha(Path(__file__))}
@@ -673,17 +932,8 @@ def execute(arguments):
     print("Inherited-descriptor controls:", summary["descriptor_control_count"], summary["descriptor_verdict_counts"])
     print("Suppression-of-future-records controls:", summary["suppression_control_count"],
           summary["suppression_verdict_counts"])
-    print("Layouts denying tampering + keeping proxies:",
-          summary["layouts_denying_all_measured_tampering_and_passing_all_judged_proxies"])
-    print("  of those, also resisting both suppression operations:",
-          summary["layouts_also_resisting_both_suppression_operations"])
+    print_coverage_and_assessment(summary)
     print("Expectation mismatches:", summary["expectation_mismatch_count"])
-    flag_not_run = [item for item in summary["not_run"]
-                    if "inode flag" in item["reason"] and "not applicable" not in item["reason"]]
-    if arguments.mode == "docker" and flag_not_run:
-        print("NOTE: this kernel's filesystem lacked inode-flag support, so the four flag layouts are not_run:")
-        for item in flag_not_run:
-            print("  -", item["count"], item["kind"], "cells:", item["reason"])
     print("Cleanup verified:", run["cleanup_verified"])
     print("Evidence:", arguments.evidence)
     print("Summary:", arguments.summary)
@@ -714,7 +964,12 @@ def main(argv=None):
     if arguments.compare:
         result = compare(read(arguments.compare[0]), read(arguments.compare[1]))
         print(json.dumps(result, indent=2))
-        raise SystemExit(0 if result["identical_verdicts"] else 1)
+        print("Executed in both: %d | not run in both: %d | not run vs measured: %d | verdict differences among "
+              "cells executed in both: %d | same coverage: %s" % (
+                  result["executed_in_both"], result["not_run_in_both"], result["not_run_vs_measured"],
+                  result["verdict_difference_count"], result["same_coverage"]), file=sys.stderr)
+        # 0: same coverage and identical verdicts; 1: a verdict differs; 3: verdicts agree but coverage differs
+        raise SystemExit(1 if result["verdict_difference_count"] else 0 if result["same_coverage"] else 3)
     if arguments.render_tables:
         for name, text in render_tables(read(arguments.render_tables)).items():
             print("<!-- %s -->\n%s\n" % (name, text))

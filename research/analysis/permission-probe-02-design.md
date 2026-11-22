@@ -6,9 +6,11 @@ design is also a literal in `research/tools/permission_probe_v2_fixture.py` (`_E
 POSIX/Linux semantics set out below, and each committed evidence file records that fixture's
 sha256 so a reader can confirm the expectations it was measured against. These files cannot prove
 the expectations were written before any earlier exploratory run (all files were untracked and the
-fixture was run several times during development). The genuinely pre-registered measurement is the
-teammate's `--mode docker` run in the committed baseline image, performed after this code is
-committed; section 8 compares expectations with the local measurements that were taken here.
+fixture was run several times during development). The measurement made after the code was committed
+is the teammate's `--mode docker` run in the baseline image at commit a329127, published in
+`research/reviews/permission-probe-02-docker/`; section 8 compares expectations with the local
+measurements taken here, and section 9 records what that Docker run showed and the aggregation
+error it exposed.
 
 ## 1. Purpose and scope
 
@@ -312,11 +314,12 @@ Measured with `fs.protected_regular=0`. With `protected_regular=1`/`2` the recor
 `O_CREAT|O_APPEND` onto an agent-owned file in a sticky world-writable directory can itself be
 refused, which this run did not exercise; the sysctl value is recorded in each evidence file.
 
-A second, stricter protecting-layout list is then computed: layouts that deny every tampering
-operation, keep every judged proxy working, **and** resist both fill operations and precreate.
-Because the shared-filesystem fill is `S` in every layout, this stricter list is expected to be
-empty unless records are isolated on their own filesystem with per-filesystem quotas — i.e.
-availability is not provided by permissions alone.
+The layout lists are three-valued (section 9): a layout holds "resists every suppression operation"
+only if precreate and both fill cells were executed and resisted; it fails if any executed cell
+showed suppression; and it is undetermined, never "resisting", if a required cell was not executed
+in the environment. Where the shared-filesystem fill is executed it is expected to be `S` in every
+layout, so no layout is expected to hold that requirement unless records are isolated on their own
+filesystem with space the agent cannot exhaust — availability is not provided by permissions alone.
 
 ## 8. Expectations versus measurements (appended after the recorded run)
 
@@ -357,9 +360,11 @@ reader should not over-read:
   directory before the flag was consulted (`denial_class=EACCES`); the flag-specific `EPERM`
   behaviour is what the same-account layouts measured.
 - Six layouts deny all fourteen measured tampering operations and keep all four judged proxies.
-  **None** of them resists both suppression operations: the shared-filesystem disk-fill starves the
-  recorder in every layout, so the stricter list is empty — availability is not delivered by
-  permissions alone. This confirms the expectation at the end of §7.5.
+  In this local run none of them holds resistance to every suppression operation, and that is a
+  determined result, not a gap: in all six the shared-filesystem fill cell was executed and the
+  recorder was starved. Four of them hold resistance to precreate and the separate-filesystem fill.
+  This matches the expectation at the end of §7.5. It is a statement about the local environment
+  only (see section 9 for Docker, where the fill cells were not executed).
 - `dirfd_listdir` showed the inherited directory descriptor leaks the entry listing in all 15
   layouts, and in `recorder_owned_no_agent_access` it is the *only* way the agent reads the names
   (the path `listdir` is `EACCES`).
@@ -379,3 +384,55 @@ Implementation notes (now consistent with §2):
   flags and the ACL xattr.
 - The fill controls run on small dedicated tmpfs mounts the runner mounts in the fixture's private
   mount namespace; their ENOSPC timing is the probe's, not any production filesystem's.
+
+## 9. Docker validation and aggregation correction
+
+Source for everything about the Docker run in this section: the teammate's
+`research/reviews/permission-probe-02-docker/README.md`, `coverage-assessment.json` and the evidence
+in `validation-originals.zip`. Nothing there was re-measured here, and the environment differences
+they list (kernel, Python, filesystem mix, several `fs.protected_*` settings) are not restated.
+
+What was measured. The probe was run unchanged at commit a329127 with `--mode docker` in the
+baseline image. Their coverage table: 495 cells recorded, 439 executed, 56 not run (ordinary
+240/226/14, legitimate and read controls 75/75/0, inherited descriptors 135/123/12, suppression
+45/15/30). Among the 439 cells executed in both environments there is no verdict difference; 28
+cells are not run in either; 28 cells, the disk-fill controls, are not run in Docker and measured
+locally. Docker mode has no dedicated fill filesystems, so both fill operations are not run for
+all fifteen layouts there.
+
+The error. The runner at a329127 derived "layouts also resisting both suppression operations" from
+the suppression cells that remained after dropping `not_run` cells. A layout whose only executed
+suppression cell was a resisted precreate was therefore listed as resisting the fill operations it
+had never been tested against. For the Docker run this listed `recorder_owned_agent_readonly`,
+`recorder_owned_no_agent_access`, `append_only_recorder_owned` and `acl_agent_read_only`. The claim
+is unsupported; for those four layouts resistance to the fill operations is undetermined in Docker.
+Summaries generated at a329127 overstate suppression resistance wherever disk-fill cells were not
+run. The measurement code (the fixture) was not at fault and is unchanged. The same filtering
+pattern existed in the tampering list (a `not_run` tampering cell was dropped) and the proxy list (a
+`not_run` proxy excluded the layout as if it had failed); neither case occurs in the committed
+evidence, and both are corrected.
+
+The corrected rule, used by the runner summary, `--render-tables`, the CLI text and the variants
+wrapper:
+
+- A cell that was not run is classified from its recorded `not_run_reason`: "not applicable: ..."
+  means the operation has no meaning in the layout and the cell is not required; "the recorder
+  identity could not open the descriptor ..." means the layout itself refused the recorder the
+  precondition; any other reason (missing filesystem feature, no fill filesystem, fixture setup
+  failure, or no reason) means the cell could not be executed in the environment.
+- A layout **holds** a requirement only if every required cell was executed with the good verdict;
+  it **fails** if an executed cell has the bad verdict; otherwise it is **undetermined**, with the
+  missing cells named. A cell ending in `unexpected_error` also makes the layout undetermined.
+  Undetermined is never reported as resisted, denied, kept or suppressed.
+- Every summary reports recorded / executed / not-run per measurement group. `--compare` reports
+  cells executed in both files, not run in both, not run in one and measured in the other, and
+  verdict differences among the cells executed in both; "verdicts identical among cells executed in
+  both" and "same coverage" are separate statements and neither implies the other.
+
+Result of applying the corrected rule to the teammate's archived Docker evidence (done read-only in
+`tests/test_permission_probe_v2.py`, `DockerValidationRegressionTests`): six layouts hold "tampering
+denied and proxies kept", as locally; no layout holds resistance to every suppression operation; the
+two sticky layouts fail it because precreate suppression was executed and observed; the four
+layouts named above are undetermined, each missing both fill cells. The local run (section 8)
+remains the only place the fill operations were executed; its fill results are local results and
+are not evidence about the Docker environment.

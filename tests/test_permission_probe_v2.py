@@ -3,6 +3,8 @@ first-principles assertions, and root-only live smoke / ACL / SIGTERM checks."""
 
 import copy
 import errno
+import hashlib
+import io
 import json
 import os
 from pathlib import Path
@@ -14,6 +16,7 @@ import sys
 import tempfile
 import time
 import unittest
+import zipfile
 from unittest.mock import patch
 
 from research.tools import permission_probe_v2_fixture as fixture
@@ -388,7 +391,7 @@ def synthetic_evidence():
     def row(case, operation, verdict, expected=None, matches=True):
         return {"case": case, "operation": operation, "verdict": verdict, "expected": expected or verdict,
                 "matches_expectation": matches, "counts_as_tampering": operation != "create_sibling",
-                "child": {"errno": None}, "not_run_reason": "x"}
+                "child": {"errno": None}, "not_run_reason": "not applicable: synthetic"}
 
     def legit(case, control, outcome, judged=True, discriminating=True, matches=True):
         item = {"case": case, "control": control, "judged": judged, "outcome": outcome,
@@ -447,8 +450,17 @@ class SummaryTests(unittest.TestCase):
         self.assertEqual(summary["expectation_mismatch_count"], 2)
         self.assertEqual({(m["kind"], m["case"], m["name"]) for m in summary["expectation_mismatches"]},
                          {("operation", "open", "delete"), ("legit_control", "open", "recorder_append")})
-        self.assertEqual(summary["layouts_denying_all_measured_tampering_and_passing_all_judged_proxies"], ["closed"])
-        self.assertEqual(summary["layouts_also_resisting_both_suppression_operations"], [])
+        assessment = summary["protection_assessment"]
+        self.assertEqual(assessment["tampering_denied_and_proxies_kept"]["holds"], ["closed"])
+        self.assertEqual([item["layout"] for item in assessment["tampering_denied_and_proxies_kept"]["fails"]],
+                         ["open"])
+        strict = assessment["and_resists_every_suppression_operation"]
+        self.assertEqual(strict["holds"], [])
+        self.assertEqual([item["layout"] for item in strict["fails"]], ["closed"])
+        self.assertEqual(strict["undetermined"], [])
+        self.assertNotIn("layouts_also_resisting_both_suppression_operations", summary)
+        self.assertEqual(summary["coverage"]["total"]["recorded"], 16)
+        self.assertEqual(summary["coverage"]["ordinary_tampering_matrix"]["not_run"], 1)
 
     def test_a_layout_suppressed_is_not_in_the_strict_list(self):
         evidence = synthetic_evidence()
@@ -460,23 +472,32 @@ class SummaryTests(unittest.TestCase):
         self.assertIn("| `open` | E | E! | n/a |", tables["matrix"])
         self.assertIn("| `closed` | S | S |", tables["suppression"])
         self.assertIn("recorder_append", tables["legit_discriminating"])
-        self.assertEqual(tables["protecting_strict"], "- (none)")
+        self.assertIn("- holds: `closed`", tables["assessment"])
+        self.assertIn("- holds: (none)", tables["assessment"])
+        self.assertIn("fails (determined)", tables["assessment"])
+        self.assertIn("| total | 16 |", tables["coverage"])
+        self.assertNotIn("protecting_strict", tables)
         self.assertIn("Suppression-of-future-records controls: 4.", tables["totals"])
 
     def test_compare_splits_environment_notrun_and_verdicts(self):
         first, second = synthetic_evidence(), synthetic_evidence()
         second["observations"]["rows"][0]["before"] = {"target": {"inode": 999}}
         result = runner.compare(first, second)
-        self.assertTrue(result["identical_verdicts"])
+        self.assertTrue(result["same_coverage_and_identical_verdicts"])
         self.assertTrue(result["environment_identical"])
+        self.assertNotIn("identical", result)
+        self.assertNotIn("identical_verdicts", result)
         second["observations"]["rows"][3]["verdict"] = fixture.E
         second["observations"]["suppression_controls"][0]["verdict"] = fixture.N
         second["observations"]["environment"]["kernel_release"] = "other"
         result = runner.compare(first, second)
-        self.assertIn("op/closed/rewrite", result["verdict_differences"])
-        self.assertIn("suppress/open/precreate_next_session_name", result["not_run_vs_measured_differences"])
+        self.assertEqual(result["verdict_differences_among_executed_in_both"], ["op/closed/rewrite"])
+        self.assertEqual(result["executed_only_in_a"], ["suppress/open/precreate_next_session_name"])
+        self.assertEqual(result["not_run_vs_measured"], 1)
+        self.assertFalse(result["same_coverage"])
         self.assertFalse(result["environment"]["kernel_release"]["same"])
-        self.assertFalse(result["identical_verdicts"])
+        self.assertFalse(result["verdicts_identical_among_cells_executed_in_both"])
+        self.assertFalse(result["same_coverage_and_identical_verdicts"])
 
 
 @unittest.skipUnless(EVIDENCE.is_file() and SUMMARY.is_file() and README.is_file(),
@@ -648,14 +669,253 @@ class CommittedEvidenceTests(unittest.TestCase):
             self.assertEqual(row["verdict"], fixture.S, case)
             self.assertTrue(row["recorder_exhausted"])
             self.assertLess(row["recorder_complete_records"], fixture.APPEND_MANY_COUNT)
-        self.assertEqual(self.summary["layouts_also_resisting_both_suppression_operations"], [])
+        strict = self.summary["protection_assessment"]["and_resists_every_suppression_operation"]
+        self.assertEqual((strict["holds"], strict["undetermined"]), ([], []))
+        self.assertEqual(len(strict["fails"]), 6)
 
     def test_readme_states_scope_and_what_was_not_executed(self):
         text = README.read_text()
         self.assertEqual(self.evidence["run"]["mode"], "local")
         for phrase in ("--mode local", "--mode docker", "not native Codex", "synthetic proxies",
-                       "sha256:eddc3b19", "protected_hardlinks", "protected_regular", "empty"):
+                       "sha256:eddc3b19", "protected_hardlinks", "protected_regular",
+                       "Docker validation and aggregation correction", "a329127", "undetermined",
+                       "permission-probe-02-docker/README.md"):
             self.assertIn(phrase, text)
+
+
+DOCKER_ARCHIVE = ROOT / "research/reviews/permission-probe-02-docker/validation-originals.zip"
+DOCKER_ARCHIVE_SHA256 = "2d9b7c71ad53914c74e46ef77b008671fda6364d2538eacbd7eac671b73588b9"
+FOUR = ["recorder_owned_agent_readonly", "recorder_owned_no_agent_access", "append_only_recorder_owned",
+        "acl_agent_read_only"]
+SIX = ["sticky_1777_dir_recorder_file", "sticky_1770_shared_group_dir"] + FOUR
+FILLS = ["fill_filesystem_then_recorder_append", "fill_filesystem_then_recorder_append_separate_fs"]
+
+
+def docker_archive_member(name):
+    """Read one JSON member of the teammate's archive without extracting or executing anything."""
+    data = DOCKER_ARCHIVE.read_bytes()
+    digest = hashlib.sha256(data).hexdigest()
+    if digest != DOCKER_ARCHIVE_SHA256:
+        raise AssertionError("validation-originals.zip changed: sha256 %s, expected %s"
+                             % (digest, DOCKER_ARCHIVE_SHA256))
+    with zipfile.ZipFile(io.BytesIO(data)) as archive:
+        return json.loads(archive.read(name))
+
+
+class ThreeValuedAggregationTests(unittest.TestCase):
+    """not_run must never be read as resisted/denied/kept: holds, fails or undetermined."""
+
+    def test_not_run_reasons_are_classified_from_the_recorded_reason(self):
+        self.assertIsNone(runner.not_run_kind({"verdict": fixture.D}))
+        self.assertEqual(runner.not_run_kind({"verdict": fixture.N, "not_run_reason":
+                                              fixture.not_applicable_reason("agent_owned_writable",
+                                                                            "chown_to_agent")}),
+                         runner.NOT_APPLICABLE)
+        self.assertEqual(runner.not_run_kind({"verdict": fixture.N, "not_run_reason":
+                                              fixture.suppression_not_applicable_reason(
+                                                  "immutable_recorder_owned", FILLS[0])}), runner.NOT_APPLICABLE)
+        self.assertEqual(runner.not_run_kind({"verdict": fixture.N, "not_run_reason":
+                                              "the recorder identity could not open the descriptor (O_WRONLY): x"}),
+                         runner.PRECONDITION_REFUSED)
+        for reason in ("no dedicated size-limited fill filesystem was provided (fill needs a small tmpfs)",
+                       "required filesystem feature unavailable on every probe root -- /probe (tmpfs): ...",
+                       "fixture setup failed for layout x: EPERM: Operation not permitted", "", None):
+            self.assertEqual(runner.not_run_kind({"verdict": fixture.N, "not_run_reason": reason}),
+                             runner.NOT_EXECUTED, reason)
+        self.assertEqual(runner.not_run_kind({"outcome": fixture.N, "not_run_reason": "whatever"}),
+                         runner.NOT_EXECUTED)
+
+    def test_requirement_is_three_valued(self):
+        good, bad = {"verdict": fixture.D}, {"verdict": fixture.E}
+        skipped = {"verdict": fixture.N, "not_run_reason": "no dedicated size-limited fill filesystem"}
+        na = {"verdict": fixture.N, "not_run_reason": "not applicable: x"}
+        broken = {"verdict": fixture.UNEXPECTED, "verdict_reason": "y"}
+        judge = runner._tamper_judge
+        self.assertEqual(runner._requirement([("a", good), ("b", na)], judge)["status"], runner.HOLDS)
+        self.assertEqual(runner._requirement([("a", good), ("b", skipped)], judge)["status"], runner.UNDETERMINED)
+        self.assertEqual(runner._requirement([("a", good), ("b", broken)], judge)["status"], runner.UNDETERMINED)
+        self.assertEqual(runner._requirement([("a", bad), ("b", skipped)], judge)["status"], runner.FAILS)
+        self.assertEqual(runner._requirement([("b", na)], judge)["status"], runner.NO_CELL)
+        self.assertEqual(runner._requirement([("b", skipped)], judge)["status"], runner.UNDETERMINED)
+        self.assertEqual(runner._requirement([("a", good), ("b", skipped)], judge)["missing"][0]["cell"], "b")
+
+    def test_local_evidence_six_deny_strict_list_is_determined_suppressed_and_four_resist_the_rest(self):
+        evidence = json.loads(EVIDENCE.read_text())
+        assessment = runner.protection_assessment(evidence["observations"])
+        base = assessment["tampering_denied_and_proxies_kept"]
+        self.assertEqual(base["holds"], SIX)
+        self.assertEqual(base["undetermined"], [])
+        self.assertEqual(len(base["fails"]), 9)
+        strict = assessment["and_resists_every_suppression_operation"]
+        self.assertEqual((strict["holds"], strict["undetermined"]), ([], []))
+        self.assertEqual([item["layout"] for item in strict["fails"]], SIX)
+        for item in strict["fails"]:
+            self.assertIn("suppress/%s/fill_filesystem_then_recorder_append" % item["layout"],
+                          item["failing_cells"])
+            self.assertEqual(item["cells_not_executed"], [])
+        relaxed = assessment["and_resists_precreate_and_separate_filesystem_fill"]
+        self.assertEqual(relaxed["holds"], FOUR)
+        self.assertEqual([item["layout"] for item in relaxed["fails"]], SIX[:2])
+        self.assertEqual(relaxed["undetermined"], [])
+        coverage = runner.coverage(evidence["observations"])
+        self.assertEqual((coverage["total"]["recorded"], coverage["total"]["executed"],
+                          coverage["total"]["not_run"]), (495, 467, 28))
+        self.assertEqual(coverage["total"]["not_run_by_kind"][runner.NOT_EXECUTED], 0)
+
+    def test_a_not_run_tampering_cell_makes_an_otherwise_denying_layout_undetermined(self):
+        observations = copy.deepcopy(json.loads(EVIDENCE.read_text())["observations"])
+        for row in observations["rows"]:
+            if row["case"] == "recorder_owned_agent_readonly" and row["operation"] == "delete":
+                row.update(verdict=fixture.N, matches_expectation=None,
+                           not_run_reason="fixture setup failed for layout recorder_owned_agent_readonly: EPERM")
+        assessment = runner.protection_assessment(observations)
+        base = assessment["tampering_denied_and_proxies_kept"]
+        self.assertNotIn("recorder_owned_agent_readonly", base["holds"])
+        entry = [item for item in base["undetermined"] if item["layout"] == "recorder_owned_agent_readonly"]
+        self.assertEqual(len(entry), 1)
+        self.assertEqual([m["cell"] for m in entry[0]["missing_cells"]],
+                         ["op/recorder_owned_agent_readonly/delete"])
+        self.assertEqual(entry[0]["missing_cells"][0]["why"], runner.NOT_EXECUTED)
+        self.assertNotIn("recorder_owned_agent_readonly", runner.protecting_layouts(observations))
+        for name in runner.SUPPRESSION_SETS:
+            listed = assessment[name]["holds"] + [item["layout"] for key in ("fails", "undetermined")
+                                                  for item in assessment[name][key]]
+            self.assertNotIn("recorder_owned_agent_readonly", listed, "not evaluated when the base is undetermined")
+
+    def test_whole_layout_not_run_or_a_not_run_proxy_is_undetermined_not_failed(self):
+        observations = copy.deepcopy(json.loads(EVIDENCE.read_text())["observations"])
+        reason = "required filesystem feature unavailable on every probe root -- /probe (tmpfs): append_only_flag"
+        for row in observations["rows"]:
+            if row["case"] == "append_only_recorder_owned":
+                row.update(verdict=fixture.N, matches_expectation=None, not_run_reason=reason)
+        for row in observations["legit_controls"]:
+            if row["case"] in ("append_only_recorder_owned", "acl_agent_read_only") and row["judged"]:
+                row.update(outcome=fixture.N, not_run_reason=reason, matches_expectation=None)
+                row.pop("passed", None)
+        base = runner.protection_assessment(observations)["tampering_denied_and_proxies_kept"]
+        undetermined = {item["layout"]: item for item in base["undetermined"]}
+        self.assertEqual(sorted(undetermined), ["acl_agent_read_only", "append_only_recorder_owned"])
+        self.assertEqual(len(undetermined["append_only_recorder_owned"]["missing_cells"]), 14 + 4)
+        self.assertEqual(len(undetermined["acl_agent_read_only"]["missing_cells"]), 4)
+        self.assertEqual(base["holds"], [name for name in SIX if name not in undetermined])
+
+    def test_a_determined_failure_wins_over_missing_cells(self):
+        observations = copy.deepcopy(json.loads(EVIDENCE.read_text())["observations"])
+        for row in observations["suppression_controls"]:
+            if row["operation"] in FILLS and row["verdict"] != fixture.N:
+                row.update(verdict=fixture.N, matches_expectation=None, not_run_reason="no fill filesystem")
+        strict = runner.protection_assessment(observations)["and_resists_every_suppression_operation"]
+        self.assertEqual(strict["holds"], [])
+        self.assertEqual([item["layout"] for item in strict["fails"]], SIX[:2])
+        self.assertEqual(sorted(item["cells_not_executed"][0].split("/")[2] for item in strict["fails"]),
+                         [FILLS[0]] * 2)
+        self.assertEqual([item["layout"] for item in strict["undetermined"]], FOUR)
+
+    def test_cli_text_always_prints_undetermined_beside_every_list(self):
+        evidence = docker_archive_member("evidence.json")
+        buffer = io.StringIO()
+        runner.print_coverage_and_assessment(runner.summarize(evidence), buffer)
+        text = buffer.getvalue()
+        self.assertEqual(text.count("holds:"), 3)
+        self.assertEqual(text.count("UNDETERMINED"), 3)
+        self.assertIn("28 COULD NOT BE EXECUTED", text)
+        self.assertIn("NOT EXECUTED HERE: 28 suppression_control cells", text)
+        section = text[text.index("also resist every suppression operation"):]
+        self.assertIn("holds: []", section.splitlines()[1])
+        for name in FOUR:
+            self.assertIn(name, section)
+
+
+class DockerValidationRegressionTests(unittest.TestCase):
+    """The teammate's baseline-image evidence (read-only from the archive) under the corrected aggregation."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.evidence = docker_archive_member("evidence.json")
+        cls.archived_summary = docker_archive_member("summary.json")
+        cls.summary = runner.summarize(cls.evidence)
+
+    def test_archive_is_the_published_one_and_ran_the_same_fixture(self):
+        self.assertEqual(self.evidence["run"]["mode"], "docker")
+        self.assertEqual(self.evidence["run"]["fixture_sha256"], runner.sha(ROOT / runner.FIXTURE))
+        self.assertTrue(self.evidence["run"]["image_id"].startswith("sha256:eddc3b19"))
+
+    def test_coverage_table_equals_the_docker_readme(self):
+        coverage = self.summary["coverage"]
+        table = {name: (entry["recorded"], entry["executed"], entry["not_run"]) for name, entry in coverage.items()}
+        self.assertEqual(table, {"ordinary_tampering_matrix": (240, 226, 14),
+                                 "legitimate_and_read_controls": (75, 75, 0),
+                                 "inherited_descriptor_controls": (135, 123, 12),
+                                 "suppression_of_future_records": (45, 15, 30),
+                                 "total": (495, 439, 56)})
+        self.assertEqual(coverage["total"]["not_run_by_kind"],
+                         {runner.NOT_APPLICABLE: 16, runner.PRECONDITION_REFUSED: 12, runner.NOT_EXECUTED: 28})
+        readme = (ROOT / "research/reviews/permission-probe-02-docker/README.md").read_text()
+        for line in ("| Ordinary tampering | 240 | 226 | 14 |", "| Suppression of future records | 45 | 15 | 30 |",
+                     "| Total | 495 | 439 | 56 |"):
+            self.assertIn(line, readme)
+        assessment = json.loads((ROOT / "research/reviews/permission-probe-02-docker/coverage-assessment.json")
+                                .read_text())
+        self.assertEqual((assessment["recorded_cells"], assessment["executed_cells"], assessment["not_run_cells"]),
+                         (495, 439, 56))
+
+    def test_resistance_to_both_suppression_operations_is_undetermined_in_docker(self):
+        assessment = self.summary["protection_assessment"]
+        self.assertEqual(assessment["tampering_denied_and_proxies_kept"]["holds"], SIX)
+        self.assertEqual(assessment["tampering_denied_and_proxies_kept"]["undetermined"], [])
+        strict = assessment["and_resists_every_suppression_operation"]
+        self.assertEqual(strict["holds"], [])
+        self.assertEqual([item["layout"] for item in strict["undetermined"]], FOUR)
+        for item in strict["undetermined"]:
+            self.assertEqual([missing["cell"].split("/")[2] for missing in item["missing_cells"]], FILLS)
+            self.assertTrue(all(missing["why"] == runner.NOT_EXECUTED for missing in item["missing_cells"]))
+            self.assertEqual(item["executed_and_good"],
+                             ["suppress/%s/precreate_next_session_name" % item["layout"]])
+        self.assertEqual([item["layout"] for item in strict["fails"]], SIX[:2],
+                         "the sticky layouts are determined: precreate suppression was executed and observed")
+        relaxed = assessment["and_resists_precreate_and_separate_filesystem_fill"]
+        self.assertEqual(relaxed["holds"], [])
+        self.assertEqual([item["layout"] for item in relaxed["undetermined"]], FOUR)
+        self.assertEqual(runner.protecting_and_suppression_resistant_layouts(self.evidence["observations"]), [])
+
+    def test_the_archived_summary_carries_the_legacy_overstatement(self):
+        legacy = self.archived_summary["layouts_also_resisting_both_suppression_operations"]
+        self.assertEqual(legacy, FOUR, "this is the bug: not_run fill cells were dropped and read as resisted")
+        self.assertNotEqual(legacy, self.summary["protection_assessment"]
+                            ["and_resists_every_suppression_operation"]["holds"])
+        self.assertNotIn("layouts_also_resisting_both_suppression_operations", self.summary)
+        self.assertNotIn("protection_assessment", self.archived_summary)
+        self.assertEqual(self.archived_summary["runner_sha256"],
+                         "5c9973593d682db50b968ea6722d495c21d7ce2e57c723fdc85d78b52d069ddb")
+
+    def test_compare_local_with_docker_reports_coverage_and_does_not_claim_it_is_identical(self):
+        local = json.loads(EVIDENCE.read_text())
+        result = runner.compare(local, self.evidence)
+        self.assertEqual((result["recorded_cells"], result["executed_in_both"], result["not_run_in_both"],
+                          result["not_run_vs_measured"], result["verdict_difference_count"]), (495, 439, 28, 28, 0))
+        self.assertFalse(result["same_coverage"])
+        self.assertTrue(result["verdicts_identical_among_cells_executed_in_both"])
+        self.assertFalse(result["same_coverage_and_identical_verdicts"])
+        self.assertFalse(result["environment_identical"])
+        self.assertEqual(len(result["executed_only_in_a"]), 28)
+        self.assertEqual(result["executed_only_in_b"], [])
+        self.assertTrue(all(cell.split("/")[2] in FILLS for cell in result["executed_only_in_a"]))
+        for name in ("identical", "identical_verdicts"):
+            self.assertNotIn(name, result)
+        archived = docker_archive_member("comparison.json")
+        self.assertTrue(archived["identical_verdicts"], "the a329127 comparator said 'identical verdicts' here")
+        self.assertEqual(len(archived["not_run_vs_measured_differences"]), 28)
+
+    def test_docker_tables_show_not_executed_cells_as_NR_never_as_resisted(self):
+        tables = runner.render_tables(self.evidence)
+        row = [line for line in tables["suppression"].splitlines()
+               if line.startswith("| `recorder_owned_agent_readonly`")][0]
+        self.assertEqual(row, "| `recorder_owned_agent_readonly` | R | NR | NR |")
+        immutable = [line for line in tables["suppression"].splitlines()
+                     if line.startswith("| `immutable_recorder_owned`")][0]
+        self.assertEqual(immutable, "| `immutable_recorder_owned` | R | n/a | n/a |")
+        self.assertIn("undetermined (required cells not executed here)", tables["assessment"])
+        self.assertIn("| total | 495 | 439 | 56 | 16 | 12 | 28 |", tables["coverage"])
 
 
 class LiveSmokeTests(unittest.TestCase):
