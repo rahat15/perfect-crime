@@ -49,13 +49,21 @@ PUBLIC = [
     "research/protocols/batch-review-policy.md",
     "research/results/permission-probe-01-summary.json",
     "research/README.md",
-    "research/handoffs/week1-manifest.json",
+    "research/manifests/initial-replication.json",
     "research/reviews/permission-probe-01/evidence.json",
     "research/reviews/permission-probe-01/README.md",
-    "research/tools/finalize_week1.py",
-    "tests/test_week1_handoff.py",
-    "research/tools/install_week1_final.py",
-    "tests/test_week1_documentation_update.py",
+    "research/tools/finalize_initial_replication.py",
+    "tests/test_initial_replication.py",
+    "research/tools/install_replication_documentation.py",
+    "tests/test_replication_documentation.py",
+    "research/protocols/financial-full-baseline-01-review-notes.md",
+    "research/reviews/initial-replication-support/README.md",
+    "research/reviews/initial-replication-support/evidence-originals.zip",
+    "research/reviews/permission-probe-02-docker/README.md",
+    "research/reviews/permission-probe-02-docker/validation-originals.zip",
+    "research/reviews/permission-probe-02-docker/coverage-assessment.json",
+    "research/tools/verify_review_support.py",
+    "tests/test_review_support.py",
 ]
 RETIRED = (
     "research/reviews/pilot-financial-full-01/review-template.md",
@@ -130,8 +138,8 @@ def verify_archive_evidence(archive, expected):
 def prepare(root, backup_dir):
     retired = retired_tracked_files(root)
     handoff = None
-    if (root / "research/handoffs/week1-manifest.json").is_file():
-        from research.tools.finalize_week1 import check_manifest
+    if (root / "research/manifests/initial-replication.json").is_file():
+        from research.tools.finalize_initial_replication import check_manifest
         handoff = check_manifest(root)
     folder = root / PILOT
     metadata = json.loads((folder / "run.json").read_text())
@@ -230,7 +238,7 @@ def prepare(root, backup_dir):
     if handoff is not None:
         for relative, digest in handoff["public_file_sha256"].items():
             backup_evidence[f"perfect-crime-repro/{relative}"] = digest
-        relative = "research/handoffs/week1-manifest.json"
+        relative = "research/manifests/initial-replication.json"
         backup_evidence[f"perfect-crime-repro/{relative}"] = sha256(root / relative)
     checkpoint = root / "research/checkpoints/independent-trial.md"
     checkpoint.parent.mkdir(parents=True, exist_ok=True)
@@ -273,7 +281,7 @@ The original and reviewed findings are separate records. Independent review is n
     updates = {
         "- Overall tracker:": "- Overall tracker: " + progress + ".",
         "- Handoff prepared locally:": "- Handoff prepared locally: " + str(handoff is not None)
-            + ". Publication must be verified before marking Week 1 complete. Independent review remains pending.",
+            + ". Publication must be verified before marking initial replication complete. Independent review remains pending.",
         "- Documentation policy:": "- Documentation policy: GitHub contains code, research evidence and standard technical documentation. Teammate requests and assignments are communicated by brief text, not repository READMEs; a separate short document is used only when necessary.",
     }
     lines = [line for line in prior_note.splitlines() if not any(line.startswith(prefix) for prefix in updates)]
@@ -309,8 +317,8 @@ The original and reviewed findings are separate records. Independent review is n
     state.update(backup_verified=True, backup_sha256=sha256(archive),
                  backup_evidence_files_verified=len(backup_evidence), baseline_review_complete=baseline_ready,
                  permission_probe_ready_for_review=permission_ready,
-                 week1_handoff_prepared=handoff is not None,
-                 week1_operator_work_complete=False)
+                 initial_replication_prepared=handoff is not None,
+                 initial_replication_published=False)
     save_json(root / STATE, state)
     save_json(backup_dir / "LATEST-CHECKPOINT.json", state)
     shutil.copy2(private_note, backup_dir / "RESUME_PRIVATE.md")
@@ -321,7 +329,7 @@ The original and reviewed findings are separate records. Independent review is n
     print("Baseline review present and backed up:", baseline_ready)
     print("Permission probe present and backed up:", permission_path.is_file())
     if handoff is not None:
-        print("Week 1 handoff present and backed up: True")
+        print("initial replication handoff present and backed up: True")
     print("GitHub upload is a separate step; no remote changes were made.")
 
 
@@ -347,8 +355,8 @@ def publish(root):
         raise SystemExit("A retired coordination file reappeared; nothing was uploaded.")
     if staged - allowed - set(retired):
         raise SystemExit("Other files are already staged. Nothing was unstaged or pushed. Send git status --short.")
-    if state.get("week1_handoff_prepared"):
-        from research.tools.finalize_week1 import check_manifest
+    if state.get("initial_replication_prepared"):
+        from research.tools.finalize_initial_replication import check_manifest
         check_manifest(root)
     account = json.loads(run("gh", "api", "user").stdout)
     defaults = {"user.name": account.get("name") or account["login"],
@@ -360,7 +368,7 @@ def publish(root):
     changed = git("diff", "--cached", "--quiet", check=False).returncode
     if changed == 1:
         message = ("Complete initial replication and permission-probe handoff"
-                   if state.get("week1_handoff_prepared") else "Save independent trace-deletion pilot checkpoint")
+                   if state.get("initial_replication_prepared") else "Save independent trace-deletion pilot checkpoint")
         run("git", "commit", "-m", message, capture=False)
     elif changed != 0:
         raise SystemExit("Could not inspect staged changes; nothing was pushed.")
@@ -377,16 +385,16 @@ def publish(root):
     if not remote or remote[0] != head:
         raise SystemExit("Remote verification did not match. Keep the local backup and send this output.")
     state.update(published=True, remote_commit=head,
-                 week1_operator_work_complete=bool(state.get("week1_handoff_prepared")))
+                 initial_replication_published=bool(state.get("initial_replication_prepared")))
     save_json(root / STATE, state)
     backup_dir = Path(state["backup_archive"]).parent
     save_json(backup_dir / "LATEST-CHECKPOINT.json", state)
-    if state["week1_operator_work_complete"]:
+    if state["initial_replication_published"]:
         note = root / "runs/setup/RESUME_PRIVATE.md"
         lines = note.read_text().splitlines()
-        lines = ["- Overall tracker: 10/10 Week 1 checkpoints complete for the operator and assistant; retire this tracker. Independent teammate review is pending in the handoff. Start Week 2 Week/Day trackers only when Week 2 work starts."
+        lines = ["- Overall tracker: Initial replication publication verified; independent raw-evidence review remains pending."
                  if line.startswith("- Overall tracker:") else line for line in lines]
-        lines = ["- Handoff publication verified at commit " + head + ". The operator's Week 1 work is complete; independent teammate review remains pending."
+        lines = ["- Handoff publication verified at commit " + head + ". Initial replication evidence is published; independent raw-evidence review remains pending."
                  if line.startswith("- Handoff prepared locally:") else line for line in lines]
         note.write_text("\n".join(lines) + "\n", encoding="utf-8")
         shutil.copy2(note, backup_dir / "RESUME_PRIVATE.md")
@@ -394,11 +402,11 @@ def publish(root):
     print("Branch:", BRANCH)
     print("Commit:", head)
     print("URL:", f"https://github.com/{REPOSITORY}/tree/{BRANCH}")
-    if state["week1_operator_work_complete"]:
-        print("WEEK 1 OPERATOR HANDOFF COMPLETE")
+    if state["initial_replication_published"]:
+        print("INITIAL REPLICATION OPERATOR HANDOFF COMPLETE")
         print("Current branch documentation: technical only; coordination templates removed.")
         print("Start here:", f"https://github.com/{REPOSITORY}/blob/{head}/research/README.md")
-        print("Independent teammate review: PENDING; tasks are bundled in the handoff.")
+        print("Independent raw-evidence review: PENDING.")
     print("Stable Wi-Fi is no longer needed for this checkpoint.")
 
 

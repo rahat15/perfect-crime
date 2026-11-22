@@ -12,7 +12,7 @@ from types import SimpleNamespace
 import unittest
 from unittest.mock import patch
 
-from research.tools import finalize_week1 as handoff
+from research.tools import finalize_initial_replication as handoff
 from research.tools import pause_checkpoint as checkpoint
 
 
@@ -136,8 +136,8 @@ class HandoffPublicationTests(unittest.TestCase):
                 checkpoint.prepare(root, Path(backup_dir))
                 state = handoff.read(root / checkpoint.STATE)
                 self.assertTrue(state["backup_verified"])
-                self.assertTrue(state["week1_handoff_prepared"])
-                self.assertFalse(state["week1_operator_work_complete"])
+                self.assertTrue(state["initial_replication_prepared"])
+                self.assertFalse(state["initial_replication_published"])
                 self.assertEqual(handoff.check_manifest(root), manifest)
         self.assertTrue(all(handoff.sha(path) == digest for path, digest in originals.items()))
 
@@ -154,7 +154,7 @@ class HandoffPublicationTests(unittest.TestCase):
             checkpoint.save_json(root / checkpoint.STATE, {
                 "backup_verified": True, "backup_archive": str(archive),
                 "prepared_head": "head", "public_files": [filename],
-                "public_sha256": {filename: digest}, "week1_handoff_prepared": True,
+                "public_sha256": {filename: digest}, "initial_replication_prepared": True,
             })
             path.write_text("changed")
             with patch.object(checkpoint, "git", return_value=SimpleNamespace(stdout="head\n")), \

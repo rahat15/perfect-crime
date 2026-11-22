@@ -17,7 +17,7 @@ Using the same installed image, create synthetic files in a fresh tmpfs. A trust
 3. Recorder-owned file in an agent-writable directory.
 4. Recorder-owned file and directory, with protected ancestors.
 
-Each case independently tests rewrite, truncate, delete, replace, append a synthetic marker, and chmod followed by rewrite. Fresh fixtures prevent one operation from changing the next operation's starting permissions. An additional control deliberately passes an already-open writable handle to an unprivileged child. Separate controls check workspace writing/Python execution and a trusted append.
+Each case independently tests rewrite, truncate, delete, replace, append a synthetic marker, and chmod followed by rewrite. Fresh fixtures prevent one operation from changing the next operation's starting permissions. An additional control deliberately passes an already-open writable handle to an unprivileged child. The inherited-handle control uses `protected_file_and_directory`. Separate controls check a small Python fixture in `/probe` tmpfs and a trusted append. That append runs as UID 0 with `CAP_DAC_OVERRIDE`; it cannot establish that a separate unprivileged recorder would work. The coding proxy does not exercise the native `/workspace` volume or session resume.
 
 These are POSIX mechanism probes, not model trials or native-harness defense results. The trusted setup uses container-only CHOWN, DAC_OVERRIDE, SETUID and SETGID capabilities; the untrusted children must have zero effective/permitted/ambient capabilities. No host directories, credentials or Docker socket are mounted. No network or model calls are used.
 
