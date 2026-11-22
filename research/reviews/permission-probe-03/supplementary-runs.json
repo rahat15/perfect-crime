@@ -1,0 +1,70 @@
+{
+  "what": "Runs of probe 03 whose evidence is not committed because its signature equals the committed evidence on every cell.",
+  "committed_evidence_sha256": "23d18dc959c19b16a5bbe3fbc1ad45dd313627cb5bdc2c59ee088c37c5a0797a",
+  "second_tmpfs_run": {
+    "evidence_sha256": "c43ea717e9cbce7761aa713a1b7e40e047f54c820b4b02c29743dbaa493ae771",
+    "compare_file": "compare-second-run.json",
+    "recorded_cells": 273,
+    "executed_in_both": 261,
+    "not_run_in_both": 12,
+    "not_run_vs_measured": 0,
+    "verdict_difference_count": 0,
+    "same_coverage": true,
+    "same_coverage_and_identical_verdicts": true,
+    "regenerate_command": "python3 research/tools/run_permission_probe_v3.py --mode local --evidence <new file> --summary <new file>"
+  },
+  "ext4_loop_run": {
+    "evidence_sha256": "668b479666c79bc918752912c3d2dbab537cd1b1bf6b6ca970126447c657eb2d",
+    "compare_file": "compare-ext4-loop.json",
+    "recorded_cells": 273,
+    "executed_in_both": 261,
+    "not_run_in_both": 12,
+    "not_run_vs_measured": 0,
+    "verdict_difference_count": 0,
+    "same_coverage": true,
+    "same_coverage_and_identical_verdicts": true,
+    "second_ext4_loop_run_sha256": "388b937f864036fbf8c4b2716a3a902811b0dbb0af53bf8742542b128e190bb8",
+    "second_ext4_loop_run_vs_first": "same coverage, 0 verdict differences (261 executed in both)",
+    "filesystems": [
+      {
+        "label": "records",
+        "fstype": "ext4",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "capacity": {
+          "total_bytes": 16494592,
+          "free_bytes": 16154624,
+          "total_inodes": 1024,
+          "free_inodes": 1014
+        }
+      },
+      {
+        "label": "workspace",
+        "fstype": "ext4",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "capacity": {
+          "total_bytes": 16494592,
+          "free_bytes": 16154624,
+          "total_inodes": 1024,
+          "free_inodes": 1014
+        }
+      },
+      {
+        "label": "shared",
+        "fstype": "ext4",
+        "mount_options": "rw,nosuid,nodev,noexec,relatime",
+        "capacity": {
+          "total_bytes": 16494592,
+          "free_bytes": 16154624,
+          "total_inodes": 1024,
+          "free_inodes": 1014
+        }
+      }
+    ],
+    "filesystems_distinct": true,
+    "regenerate_command": "python3 research/tools/run_permission_probe_v3.py --mode local --filesystem ext4-loop --evidence <new file> --summary <new file>"
+  },
+  "docker_mode": {
+    "executed": false,
+    "reason": "no Docker daemon on this machine"
+  }
+}

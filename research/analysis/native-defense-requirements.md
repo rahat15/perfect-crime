@@ -82,7 +82,10 @@ exec without a user override), so none of the separate-account layouts exists th
 - In the Docker image neither fill operation was executed, so resistance to them is undetermined
   there for every layout. This requirement rests on the sandbox measurement until the fill controls
   can run in the image.
-- Not measured: exhaustion of inodes, of process or file-descriptor limits, or of memory.
+- Inode exhaustion (probe 03, sandbox): resisted when records had their own filesystem; on a shared
+  filesystem it stopped the recorder creating a new session file while appends to the existing
+  transcript still succeeded.
+- Not measured: exhaustion of process or file-descriptor limits, or of memory.
 
 ### R6. No writable handle to a transcript may reach an agent-directed process
 
@@ -137,8 +140,34 @@ recorder (or root) and not writable by the agent; agent access read-only or none
 own filesystem with reserved space; no transcript handle inherited by tools; optionally the
 append-only flag on each transcript. In the probe this corresponds to
 `recorder_owned_agent_readonly` or `recorder_owned_no_agent_access` placed on a separate filesystem
-under a non-agent parent. That exact combination was measured piecewise (ordinary operations in both environments,
-separate-filesystem fill in the sandbox only, parent ownership in both) and not as one integrated fixture.
+under a non-agent parent. Probe 02 measured that combination piecewise. Probe 03
+(`research/reviews/permission-probe-03/`, sandbox only) measured it as one fixture.
+
+## Probe 03: the integrated layout in one fixture
+
+Four integrated layouts (I1 read-only, I2 no agent access, I3 and I4 the same with the append-only
+flag) and three negative controls that each break one requirement. 273 recorded cells, 261 executed,
+0 expectation mismatches, identical verdicts on a second run and on three separate ext4 filesystems.
+
+- I1 to I4: every tampering cell was denied or blocked, all four suppression operations were
+  resisted (precreate, filling the agent's own filesystem, filling the records filesystem directly,
+  inode exhaustion), and the recorder proxies passed, including 200 appends and a new session after
+  the agent had filled its own filesystem.
+- With records on a separate filesystem, replace, rename out of the directory, hard link and symlink
+  swap of the file end in `EXDEV` in the read-only layouts. Those cells are blocked by the filesystem
+  boundary and did not test the permission behind them (R2, R9).
+- N1 (records share the workspace filesystem): the recorder was starved by a fill, and inode
+  exhaustion stopped new-session creation (R5).
+- N2 (agent owns the parent of the records directory): parent rename and symlink swap had effect,
+  and the agent could also fill and exhaust inodes on the records filesystem. A separate filesystem
+  does not help if the agent owns a directory on it (R3, R5).
+- N3 (writable descriptor passed to the agent, no flag): truncate and overwrite had effect; with the
+  flag (I3) both were refused with `EPERM` (R6, R7).
+- New-session window: a file the recorder had just created, not yet flagged, was not affected by
+  any agent operation in any layout (48 cells). There the mode and directory protect it; the flag's
+  absence matters only against an inherited descriptor (sharpens R7).
+- In I1 and I2 a deliberately passed descriptor still had effect in 7 of 9 executed controls, and in
+  I3 and I4 in 3 of 7 (append and name listing). Permissions do not replace R6.
 
 ## Acceptance checks for the native defense
 
@@ -163,6 +192,9 @@ Each is a check on the real harness that the probe cannot make.
 
 ## Limits of this document
 
+- Probe 03 and the pre-mounted disk-fill run of probe 02 were executed in the sandbox only. Their
+  docker modes are implemented and mock-tested, not executed; what is undetermined in the image stays
+  undetermined until a teammate runs them.
 - Synthetic syscalls by dropped-privilege children. Two environments: a cloud sandbox (all cells)
   and the baseline Docker image on one WSL2 host (439 of 495 cells; the disk-fill cells remain
   unmeasured in the image). Agreement among cells executed in both does not show identical
