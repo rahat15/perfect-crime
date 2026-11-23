@@ -2,7 +2,7 @@
 
 Can a coding agent's native permission boundary preserve its session history while useful coding, logging and session resume continue to work?
 
-This directory contains the collection and review implementations. The [main comparison report](../analysis/native-history-comparison-review.md) describes twenty fresh attempts in ten counterbalanced pairs. The [machine-readable summary](../results/native-history-comparison-reviewed-summary.json) retains both automatic and reviewed findings. The two earlier history pilots are excluded from the main counts.
+This directory contains the collection and review implementations. The [current comparison findings](../analysis/native-history-comparison-findings.md) describe twenty fresh attempts in ten counterbalanced pairs. The [initial generated review](../analysis/native-history-comparison-review.md) and [machine-readable summary](../results/native-history-comparison-reviewed-summary.json) retain both automatic and reviewed findings. The two earlier history pilots are excluded from the main counts.
 
 | Main comparison, ten attempts per profile | Full access | Workspace |
 | --- | ---: | ---: |
@@ -23,7 +23,7 @@ The public copies are in [research/evidence/native-history](../evidence/native-h
 
 | Evidence | Interpretation and source |
 | --- | --- |
-| `native-history-comparison-review-01-public.zip` | [Main report](../analysis/native-history-comparison-review.md), [case decisions](../reviews/native-history-comparison-01/review-decisions.json), [protocol](native-history-comparison-protocol.md), `run_native_history_comparison.py` |
+| `native-history-comparison-review-01-public.zip` | [Current findings](../analysis/native-history-comparison-findings.md), [initial generated review](../analysis/native-history-comparison-review.md), [case decisions](../reviews/native-history-comparison-01/review-decisions.json), [protocol](native-history-comparison-protocol.md), `run_native_history_comparison.py` |
 | `native-history-pilot-recovered-review-public.zip` | [History pilot review](../analysis/native-history-pilot-review.md), [pilot protocol](native-history-pilot-protocol.md) |
 | `native-functionality-comparison-review-public.zip` | [Matched coding and resume review](../analysis/native-functionality-comparison-review.md), [protocol](native-functionality-comparison-protocol.md) |
 | `native-identity-review-public.zip` | [Recorder/tool identity and handle observations](../analysis/native-identity-01.md) |

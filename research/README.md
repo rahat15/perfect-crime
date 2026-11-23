@@ -4,7 +4,7 @@ Experimental code and evidence for a selected financial/privacy case from [Perfe
 
 ## Native history comparison
 
-The subsequent [native history experiments](native/README.md) include a twenty-attempt comparison, separate coding/resume pilots, process observations and offline controls. The [main report](analysis/native-history-comparison-review.md) distinguishes preserved workspace histories from observed operating-system denials and records retained SQLite conversation data. Public evidence and verification instructions are indexed in the native-history directory. Independent human review is pending.
+The subsequent [native history experiments](native/README.md) include a twenty-attempt comparison, separate coding/resume pilots, process observations and offline controls. The [current findings](analysis/native-history-comparison-findings.md) distinguish preserved workspace histories from observed operating-system denials and describe what remained in SQLite. Public evidence and verification instructions are indexed in the native-history directory. Independent human review is pending.
 
 ## Initial replication findings
 
