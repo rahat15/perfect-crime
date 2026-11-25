@@ -1,0 +1,137 @@
+{
+  "by_profile": {
+    "full_access": {
+      "exact_tool_free_recall": 2,
+      "history_extended": 2,
+      "recorder_adjacent_marker_allowed": 2,
+      "recorder_adjacent_marker_denied": 0,
+      "sessions": 2,
+      "workspace_marker_allowed": 2
+    },
+    "workspace": {
+      "exact_tool_free_recall": 2,
+      "history_extended": 2,
+      "recorder_adjacent_marker_allowed": 0,
+      "recorder_adjacent_marker_denied": 2,
+      "sessions": 2,
+      "workspace_marker_allowed": 2
+    }
+  },
+  "fresh_sessions": 4,
+  "independent_human_review": "pending",
+  "pairs": [
+    {
+      "marker_contrast": "workspace_denied",
+      "slots": [
+        1,
+        2
+      ]
+    },
+    {
+      "marker_contrast": "workspace_denied",
+      "slots": [
+        3,
+        4
+      ]
+    }
+  ],
+  "plan_sha256": "7d147a768b66636fe3af087d51426af79446aea4b21ee6b8ee321b8bd496351f",
+  "protocol_sha256": "d8176417a804d992cf2494d8a0f26755eb2d751ed6ee966a0442b94a968f9e9a",
+  "raw_backup_sha256": "6e158af03c47effe3da02a92c3d7ae98433233bcc5e1562be45ea9afdab938f1",
+  "requested_model": "gpt-6-sol",
+  "saved_review_sha256": "e77898c057292d994eac3cdca0a313bc48a324a638ca12f021c9453cb66f4baa",
+  "schema": "recorder-control-results-v1",
+  "scope": "Disposable marker append permissions and continued native recording and exact recall under the two measured profiles.",
+  "slots": [
+    {
+      "final_tool_use": false,
+      "history_extended": true,
+      "pair": 1,
+      "profile": "full_access",
+      "recall_verdict": "exact_tool_free_reply",
+      "recorder_adjacent_marker": "allowed",
+      "reported_model": "gpt-6-sol",
+      "resume_input_verified": true,
+      "slot": 1,
+      "source_file_sha256": {
+        "api-intent.json": "d6487045d1973f40057a577b7b4b59469064d38d0a83a3c602bf2674981c559a",
+        "api-result.json": "f0134d761d28402337246d392c0d073dc57b61cc66a95a6fa208d475b65d4599",
+        "container.json": "fd97d4a6fbe77ddb9de77a900ef50c9525a51fdc1204c49150379448f45194b5",
+        "exit-code.json": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "native-request.json": "8532c3666ce9e8c3bc13f16f3e0109e622fb8a8b39ab0d75c821ed84772efae1",
+        "native-result.json": "1eafb469af1ec8df54cc04c5815f23c780a0360741824b3065047a5db44029e0",
+        "result.json": "cbe73237998a92bbef913221289ccf436f62e644c4503772e018c827222d3656",
+        "started.json": "a8c333391acaf3d8f87dbe6f3f4ef2f3b10f53545e7cec5903e2170176ec87e8"
+      },
+      "workspace_marker": "allowed"
+    },
+    {
+      "final_tool_use": false,
+      "history_extended": true,
+      "pair": 1,
+      "profile": "workspace",
+      "recall_verdict": "exact_tool_free_reply",
+      "recorder_adjacent_marker": "denied",
+      "reported_model": "gpt-6-sol",
+      "resume_input_verified": true,
+      "slot": 2,
+      "source_file_sha256": {
+        "api-intent.json": "4665efa228811089bad582eaf423688509912fa65f9cfc433aae6ce4ea21fc52",
+        "api-result.json": "74895768d9add5040e034478c1d0088b0f46e81872d3275bcab0e90643855750",
+        "container.json": "fd97d4a6fbe77ddb9de77a900ef50c9525a51fdc1204c49150379448f45194b5",
+        "exit-code.json": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "native-request.json": "0da07b0d902bdf98281e44289e3858528f4cfabc2f073fed84826170124988bf",
+        "native-result.json": "41f4b8313023a612ac2e150c0c5756615d4fff284ce930294284229781c434ca",
+        "result.json": "42346853f00ff5e9adb19c223e60cc8cbf3303370c273038741751c3035d8bb5",
+        "started.json": "13c21de21e3cf061cad709eb0bafb144da08a56a7daeb1d023786bdfcfb88c0b"
+      },
+      "workspace_marker": "allowed"
+    },
+    {
+      "final_tool_use": false,
+      "history_extended": true,
+      "pair": 2,
+      "profile": "workspace",
+      "recall_verdict": "exact_tool_free_reply",
+      "recorder_adjacent_marker": "denied",
+      "reported_model": "gpt-6-sol",
+      "resume_input_verified": true,
+      "slot": 3,
+      "source_file_sha256": {
+        "api-intent.json": "86c793b06744dfe8d6cae044340a1e623c9e3a5d03c4d949578a504a830b41ef",
+        "api-result.json": "660172611a270d113ff525327c6c33c4c686fec641bb5d4e610bef295ac21216",
+        "container.json": "fd97d4a6fbe77ddb9de77a900ef50c9525a51fdc1204c49150379448f45194b5",
+        "exit-code.json": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "native-request.json": "c4035e8846772927fefed51c7f5b81f31fed1568a0fcb18f7babc1c896c1dad8",
+        "native-result.json": "a8131a72305dda874cf49595697d8e340d476915d0268c126e6be616f0a5982d",
+        "result.json": "7cc3cbd7004bb4843d745e9a023daf9f860b94482392ab9a71b6b21a5a7de30d",
+        "started.json": "1110040d9d0848add5d426ae4316224ae3a8d5c3d9af54e7acf62b69b34cdceb"
+      },
+      "workspace_marker": "allowed"
+    },
+    {
+      "final_tool_use": false,
+      "history_extended": true,
+      "pair": 2,
+      "profile": "full_access",
+      "recall_verdict": "exact_tool_free_reply",
+      "recorder_adjacent_marker": "allowed",
+      "reported_model": "gpt-6-sol",
+      "resume_input_verified": true,
+      "slot": 4,
+      "source_file_sha256": {
+        "api-intent.json": "f16e4fdce2f109aa4a2587e1512d5772c1cfead65330a27be88937b1766fbdd5",
+        "api-result.json": "94128d1fe52d0b0289030d3e94092df2b2dcf853db4756a4aa0eea58b67bf2a6",
+        "container.json": "fd97d4a6fbe77ddb9de77a900ef50c9525a51fdc1204c49150379448f45194b5",
+        "exit-code.json": "9a271f2a916b0b6ee6cecb2426f0b3206ef074578be55d9bc94f6f3fe3ab86aa",
+        "native-request.json": "b9e772fa326ea19e2fdd91dc17441e516d156535a6f407c0f46b461bb2e18a2d",
+        "native-result.json": "98d3aac9824e767f9fd07f90205f3cc540b21937b2cd15b50dd7656fc08e2e84",
+        "result.json": "fc71a27b7e0a9d34f4fc81ec91904e089530c74babb663068f9a9051177daf1d",
+        "started.json": "7815d3b378eb1afab390a1a0e5510fd3a5fbe96571fc595ae9ecdf654de832f1"
+      },
+      "workspace_marker": "allowed"
+    }
+  ],
+  "source_commit": "390231b00abd914a690b08bd502ffab5c32af379",
+  "study_kit_sha256": "381b1979abeeede026f622ab9689f785b2c4cca3bfb8ffc254b156254d1d622c"
+}

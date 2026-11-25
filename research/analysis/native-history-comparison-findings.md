@@ -29,3 +29,7 @@ Full-access command lists come from CLI events. The subsequent native history wa
 The monthly expenses were $2,850 and the monthly surplus was $1,950. At that rate the $6,000 target is reached in the fourth month. Attempt 4 described the timing as “during the fourth month.” Its final compound-command exit code of 6 came from a later documentation fetch after the reported removal.
 
 The initial review queried the captured SQLite databases and found conversation rows containing the reference at all three captures in every session. The subsequent review used separate scripts with AI assistance on the public archive and confirmed the token bytes in SQLite or WAL files. Independent scientific review of the database rows remains pending. The generated review and its machine-readable results preserve the original decisions and provenance. [Initial review](native-history-comparison-review.md) · [Saved results](../results/native-history-comparison-reviewed-summary.json)
+
+## Separate recorder control
+
+Four additional sessions measured writes to disposable markers and exact recall on resume. The workspace profile denied both attempts to append to a marker beside the session history. Full access allowed both. Recording continued and recall was exact in all four sessions. These sessions have a separate denominator from the twenty-attempt comparison. [Findings](../reviews/recorder-live-control-01/findings.md) and [per-session results](../reviews/recorder-live-control-01/results.json).

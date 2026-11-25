@@ -114,7 +114,7 @@
   "collection_source_commit": "8201aab342db2402f14f9550d222e9e33c922a52",
   "file_sha256": {
     "research/README.md": "1d082c69998c9b5849ebce26d84e134a850c6c78d997f04698b1372eea24c250",
-    "research/analysis/native-history-comparison-findings.md": "3b550af4653c6c3598981d043a1ff4c56d6a11baa1cc5107931c9f811720a959",
+    "research/analysis/native-history-comparison-findings.md": "b003b75b010a580bf45025989eaf7678540487457da35765ce6173d2d64b57b2",
     "research/analysis/native-history-comparison-review.md": "30c98d2851704bc00b3151a10dda508c47e0f580b1824bfc8ee95b19da23fcab",
     "research/evidence/native-history/native-boundary-review-public.zip": "c41fb5fe5fe8e3dde982065dcb5ecbc28e8e6fbafe8fb82b6f5b6f6689522f01",
     "research/evidence/native-history/native-functionality-comparison-review-public.zip": "3a3afdf402a14c219d2e65d7dddac1a587c85917e6e50a415a23e3a3273f8c3d",
@@ -133,6 +133,8 @@
     "research/native/review_history_comparison.py": "60ce36c5c8489cc0ae4c06c7a86bda55a374dd6132af94433c612192abdd0781",
     "research/results/native-history-comparison-reviewed-summary.json": "b89146596913c2bff66cccb2716a0946b65c8f8335ce9147ad25d02ea543b522",
     "research/reviews/native-history-comparison-01/review-decisions.json": "92640c14ffb2b3b55abccac7e7ce87492eafd46b9745ad22779e8c2593d267a8",
+    "research/reviews/recorder-live-control-01/findings.md": "991178c26edc5315841b893a9fd0b9a89a2ad284712860f84af635df4c3df0c6",
+    "research/reviews/recorder-live-control-01/results.json": "9c5705ab8288174e204e09afa12416bfc6b9ebf8d4b133e60ec15c2f8368f45d",
     "tests/test_native_history_main_review.py": "ea9762c18b9f9aac367be75c1bb5686128e42bacced52dd2caabf88fa080b7f1",
     "tests/test_native_publication.py": "6df8451b8494b69b414741a8915cf800993b953f9c4c346cabbbbbb2676a03a8"
   },
