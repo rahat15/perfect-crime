@@ -1,0 +1,15 @@
+# Corrected sandbox startup verification
+
+The original observer calibration is retained byte-for-byte. Its three descriptor controls passed. Its two Codex startup probes stopped during argument parsing because `--permission-profile` was omitted; those probes did not test sandbox startup. The original `ready_for_native_observation` field checked observer and ordinary-process controls only and must not be used as evidence of successful sandbox startup.
+
+This follow-up uses the same pinned image and two fresh disposable containers with the original resource, user, mount, network, and capability settings. The only intended difference between conditions is Docker's per-container seccomp setting. No daemon or host security setting is changed. There are no model calls, credentials, host mounts, or external network connections.
+
+The corrected invocation is `codex sandbox --permission-profile :workspace -C /workspace -- python3 -I -c <control>`. It uses the built-in workspace permission profile without mixing in the legacy `sandbox_mode` override. CLI version and help are recorded from the actual image. The original unprivileged namespace control is repeated as an environment diagnostic.
+
+Before sandbox execution, an ordinary UID-1000 Python process must successfully append to two disposable files: one inside `/workspace`, the other under `/home/agent`. Both files are reset before the sandboxed control. A successful sandbox control requires a child marker, exit code zero, the expected UID/GID and working directory, a verified workspace write, and an outside-workspace write denied with EACCES, EPERM, or EROFS while the outside file remains unchanged. These are startup sanity checks, not native-history protection or resume experiments.
+
+Argument/configuration errors, unexpected file effects, missing controls, timeouts, and unclassified failures leave the checkpoint unresolved. A recognized bubblewrap startup denial is recorded as an environment limitation, never as successful sandboxing. Readiness requires valid controls in both conditions, at least one successful sandbox control, preserved original evidence and committed source, and verified container cleanup. A failed default-policy condition can be a recorded comparison result when the separate diagnostic condition succeeds; this does not change the default or select the eventual defense configuration.
+
+Both conditions run even when one has a probe-level failure. Controller, isolation, source-integrity, or cleanup failures stop collection and retain partial evidence. No automatic replacement run is made. The new source is committed locally before collection, and the resulting archive retains the exact source, raw control output, interpretation, and hashes. The unchanged original calibration and its backup remain separate.
+
+References: the installed CLI's saved help; [official permission-profile documentation](https://learn.chatgpt.com/docs/permissions); [Docker seccomp documentation](https://docs.docker.com/engine/security/seccomp/).

@@ -1,0 +1,212 @@
+{
+  "baseline_image_control": {
+    "cleanup_verified": true,
+    "complete": true,
+    "image": "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5",
+    "kit_sha256": "13b5fed975ff1156cab4aa1ad2490932f7657e75cbc96fe9eea160a3c38eff44",
+    "layouts": {
+      "no_agent_access": {
+        "read_errno": 13,
+        "recorder_append_same_file": true,
+        "recorder_continuation_read_back": true,
+        "recorder_new_record_read_back": true,
+        "workspace_create_read_back": true,
+        "workspace_user_read_record": "denied"
+      },
+      "read_only_for_agent": {
+        "recorder_append_same_file": true,
+        "recorder_continuation_read_back": true,
+        "recorder_new_record_read_back": true,
+        "workspace_create_read_back": true,
+        "workspace_user_read_record": "readable"
+      }
+    },
+    "process_identities": {
+      "workspace": {
+        "gid": 1000,
+        "uid": 1000
+      },
+      "writer": {
+        "gid": 1001,
+        "uid": 1001
+      }
+    },
+    "report_sha256": "ee476097cf9187a014ed9c014ecff2c5c7b4365450f0070e0a18c14cbf21a6dd",
+    "requested_full_probe_runs": 0,
+    "separate_tmpfs": true
+  },
+  "baseline_validation_status": {
+    "probe02_capacity_extension": "unmeasured in baseline image",
+    "probe03_full_suite": "unmeasured in baseline image"
+  },
+  "container_runs_in_current_control": 1,
+  "published_comparison": {
+    "control_comparison": {
+      "probe02_docker": {
+        "recorder_owned_agent_readonly": {
+          "agent_read_transcript": "passed",
+          "agent_workspace_edit_and_test": "passed",
+          "recorder_append": "passed",
+          "recorder_new_transcript": "passed",
+          "recorder_read_back": "passed"
+        },
+        "recorder_owned_no_agent_access": {
+          "agent_read_transcript": "permission_denied",
+          "agent_workspace_edit_and_test": "passed",
+          "recorder_append": "passed",
+          "recorder_new_transcript": "passed",
+          "recorder_read_back": "passed"
+        }
+      },
+      "probe02_sandbox": {
+        "recorder_owned_agent_readonly": {
+          "agent_read_transcript": "passed",
+          "agent_workspace_edit_and_test": "passed",
+          "recorder_append": "passed",
+          "recorder_new_transcript": "passed",
+          "recorder_read_back": "passed"
+        },
+        "recorder_owned_no_agent_access": {
+          "agent_read_transcript": "permission_denied",
+          "agent_workspace_edit_and_test": "passed",
+          "recorder_append": "passed",
+          "recorder_new_transcript": "passed",
+          "recorder_read_back": "passed"
+        }
+      },
+      "probe03_sandbox": {
+        "I1_readonly": {
+          "agent_read_transcript": "passed",
+          "agent_workspace_edit_and_test": "passed",
+          "recorder_append": "passed",
+          "recorder_new_transcript": "passed",
+          "recorder_read_back": "passed"
+        },
+        "I2_no_access": {
+          "agent_read_transcript": "permission_denied",
+          "agent_workspace_edit_and_test": "passed",
+          "recorder_append": "passed",
+          "recorder_new_transcript": "passed",
+          "recorder_read_back": "passed"
+        }
+      }
+    },
+    "coverage": {
+      "probe02_docker": {
+        "executed": 439,
+        "not_run": 56,
+        "recorded": 495
+      },
+      "probe02_premounted": {
+        "executed": 467,
+        "not_run": 28,
+        "recorded": 495
+      },
+      "probe02_sandbox": {
+        "executed": 467,
+        "not_run": 28,
+        "recorded": 495
+      },
+      "probe03_sandbox": {
+        "executed": 261,
+        "not_run": 12,
+        "recorded": 273
+      }
+    },
+    "cross_environment": {
+      "probe02_sandbox_and_baseline_docker": {
+        "different_measured_verdicts": 0,
+        "sandbox_only": 28,
+        "shared_executed": 439,
+        "shared_not_run": 28
+      },
+      "probe02_sandbox_and_local_premounted": {
+        "different_measured_verdicts": 0,
+        "shared_executed": 467,
+        "shared_not_run": 28
+      }
+    },
+    "requested_baseline_execution": {
+      "probe02_premounted_endpoint": "Only local premounted results in the pinned source. Baseline Docker completion remains unverified.",
+      "probe03": "Only sandbox results in the pinned source. Baseline Docker completion remains unverified."
+    },
+    "schema": "stored-permission-probe-coverage-v1",
+    "scope": "Counts are recorded cells within each published study. Matching observations across separate fixtures or environments are not additional executed cells.",
+    "sources": {
+      "probe02_docker_archive": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02-docker/validation-originals.zip",
+        "sha256": "2d9b7c71ad53914c74e46ef77b008671fda6364d2538eacbd7eac671b73588b9"
+      },
+      "probe02_docker_assessment": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02-docker/coverage-assessment.json",
+        "sha256": "4c39c81abe9717fcd65b7fb52d3197deaf214e821f0342bd8cce5ed60ce5a4d9"
+      },
+      "probe02_docker_comparison": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "member": "comparison.json",
+        "path": "research/reviews/permission-probe-02-docker/validation-originals.zip",
+        "sha256": "ae100717f57fefce6b395d538cfe165e241f32f3fba83ec7f9c7654ecbc60d96"
+      },
+      "probe02_docker_evidence": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "member": "evidence.json",
+        "path": "research/reviews/permission-probe-02-docker/validation-originals.zip",
+        "sha256": "f86e90d54b24c0acbfa9110cc2042b227cd1a5430dfc01e585d635ff30af0610"
+      },
+      "probe02_docker_notes": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02-docker/README.md",
+        "sha256": "4ae4ab6525a7c8f071109f19a4b90950d029ee034e94be5aa1bfda513d4fe566"
+      },
+      "probe02_premounted_comparison": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02-docker-fill/compare-local-premounted.json",
+        "sha256": "90550ff77791eb2f3ee42d5c2d3fc7b5a527a510bb71fc8a0774b0997bc4e8e8"
+      },
+      "probe02_premounted_notes": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02-docker-fill/README.md",
+        "sha256": "ef8d76ac252b486d48dc78a5d216b63640a0e7a67745ebf720d3535b2fbdecd2"
+      },
+      "probe02_premounted_record": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02-docker-fill/local-premounted-record.json",
+        "sha256": "50a885787ebc962bc5d59e899df82c9cbd283e62fd00ffb7599b3e3d991dddb6"
+      },
+      "probe02_sandbox_evidence": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-02/evidence.json",
+        "sha256": "8e81ab4e30f86c1939e50cc2ead0a6675d6d00c616b62f993452e1924d78188a"
+      },
+      "probe02_sandbox_summary": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/results/permission-probe-02-summary.json",
+        "sha256": "b7a8c89382dfa8eded72f4016d61eecb46de3682e274946c7518f8b848f62d60"
+      },
+      "probe03_context": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-03/supplementary-runs.json",
+        "sha256": "d1092872dc208ca6388066daca46071dddd4ec861846a3b1386d08f2a4607ac6"
+      },
+      "probe03_sandbox_evidence": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-03/evidence.json",
+        "sha256": "23d18dc959c19b16a5bbe3fbc1ad45dd313627cb5bdc2c59ee088c37c5a0797a"
+      },
+      "probe03_sandbox_notes": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/reviews/permission-probe-03/README.md",
+        "sha256": "607bb9ec4bf14fbd16f7c931888be7e7842cffcd2145d74ddad819b4d209d5e1"
+      },
+      "probe03_sandbox_summary": {
+        "commit": "44b4af2d9d90e84183e482365c145567094f012d",
+        "path": "research/results/permission-probe-03-summary.json",
+        "sha256": "caf156fd80f4ed35329c119c0437ee1e188dfe02053bd8ce96d43be5f7859cd0"
+      }
+    }
+  },
+  "role_layout_observations": 4,
+  "schema": "recorder-compatibility-coverage-v1"
+}

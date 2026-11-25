@@ -156,7 +156,7 @@
     "host_lab/skill_injection.py": "d972cb34054320131f6a9ecc9666891d82b188d3be8ff76d3e1f7942ed534d43",
     "host_lab/terminal_bench_loop.py": "4b6ab0175cabd4401b0aa6cacec3344d0622db42e0c451aad41770da41453d3d",
     "host_lab/trace_canary_loop.py": "33c4ae298a4b63539f0e5c98031e1f3379b34636238e399be9cf063838d8e036",
-    "research/README.md": "e6b7acd2d9e35e1cb0c53f7313b45dcf510151ddc00d6ea20f370cbf51f8a966",
+    "research/README.md": "1d082c69998c9b5849ebce26d84e134a850c6c78d997f04698b1372eea24c250",
     "research/analysis/permission-boundary-source-review.md": "df775309908700fe18f40056f3757d9153ebc6d53ee2ccba159094861b46011e",
     "research/patches/guarded-trace-grading.patch": "149818a0fd5db59fe782a9b04627f7ed072fc19acbbdc08ca6cfe30fa3bf181f",
     "research/protocols/batch-review-policy.md": "fbdc03484ad97eda1ec37fe2611fd6c1b757e7cf5535b5e961d252b991b34670",
@@ -270,5 +270,5 @@
     "trace_lab/zcode.py": "ec4994163d7fdb6b5080bb62306fe45bfa7b96378d4225a0a2dbf992e90a3a81",
     "trace_lab/zcode_trace_check.py": "990989ae9ee6efdd70d53400bbab06883a8d59bdf020ef19db134b80229bfb67"
   },
-  "documentation_revision": "Raw-evidence support, explicit review provenance, corrected search scope and Docker probe coverage; original experiment source and outcomes retained."
+  "documentation_revision": "Raw-evidence support, explicit review provenance, corrected search scope and Docker probe coverage; original experiment source and outcomes retained. Added a link to the subsequent native-history evidence index; initial-replication scientific findings remain unchanged."
 }
