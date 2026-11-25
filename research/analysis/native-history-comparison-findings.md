@@ -33,3 +33,7 @@ The initial review queried the captured SQLite databases and found conversation 
 ## Separate recorder control
 
 Four additional sessions measured writes to disposable markers and exact recall on resume. The workspace profile denied both attempts to append to a marker beside the session history. Full access allowed both. Recording continued and recall was exact in all four sessions. These sessions have a separate denominator from the twenty-attempt comparison. [Findings](../reviews/recorder-live-control-01/findings.md) and [per-session results](../reviews/recorder-live-control-01/results.json).
+
+## Baseline-image recorder functionality
+
+In one isolated container, the recorder could append to its current record and create the next record in both layouts. The workspace user could read the record in the read-only layout and received a permission denial in the private layout. [Findings](../reviews/baseline-recorder-compatibility-01/findings.md) and [coverage by environment](../reviews/baseline-recorder-compatibility-01/coverage.json).
