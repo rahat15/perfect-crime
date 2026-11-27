@@ -1,0 +1,60 @@
+# Derived image for the account-separation condition. NOT BUILT OR RUN in the
+# research sandbox (no Docker daemon); every line here is unverified until built.
+#
+# FROM the pinned baseline image the frozen native experiments use
+# (sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5).
+# It adds only: a tool account (1002) and a shared workspace group (2000); the
+# account-separation package; the codex shim; and, as the very last filesystem
+# change, the agent-shell stub in place of /bin/bash and /bin/sh.
+#
+#   docker build -f research/native/account_separation/Dockerfile.account-separation \
+#       --build-arg BASE_IMAGE=<baseline image id> -t trace-lab-account-separation:derived .
+
+ARG BASE_IMAGE
+FROM ${BASE_IMAGE}
+ARG BASE_IMAGE
+LABEL org.trace-lab.account-separation.base="${BASE_IMAGE}"
+USER root
+
+# The recorder is the image's existing account `agent` (UID/GID 1000). Tools run as
+# the new account `tool` (UID/GID 1002). UID 1001 is deliberately left unused.
+RUN set -eux; \
+    groupadd --gid 2000 shared; \
+    groupadd --gid 1002 tool; \
+    useradd --uid 1002 --gid 1002 --no-create-home --home-dir /home/tool --shell /bin/bash tool; \
+    usermod --append --groups shared tool; \
+    usermod --append --groups shared agent; \
+    install -d -m 0755 -o tool -g tool /home/tool
+
+COPY research/native/account_separation /opt/trace-lab/research/native/account_separation
+
+# The harness starts `codex` by name as root (docker exec without --user). The shim
+# hands that to the launcher so the real CLI runs as UID 1000 with the ambient capabilities.
+RUN set -eux; \
+    real="$(command -v codex)"; test "$real" = /usr/local/bin/codex; \
+    mv /usr/local/bin/codex /usr/local/bin/codex.real; \
+    install -m 0755 /opt/trace-lab/research/native/account_separation/codex_shim.py /usr/local/bin/codex; \
+    /usr/local/bin/codex.real --version
+
+# LAST filesystem change. After this RUN every shell in the image is the wrapper,
+# so no later instruction may use the shell form. The compiler is installed, used
+# and removed before the shells are replaced (package scripts need a real shell).
+RUN set -eux; \
+    apt-get update; apt-get install -y --no-install-recommends gcc libc6-dev; \
+    src=/opt/trace-lab/research/native/account_separation/agent_shell_stub.c; \
+    wrap=/opt/trace-lab/research/native/account_separation/agent_shell.py; \
+    for shell in bash sh; do \
+      gcc -O2 -Wall -Wextra -DREAL_SHELL="\"/bin/${shell}.real\"" -DWRAPPER="\"${wrap}\"" \
+          -DPYTHON='"/usr/local/bin/python3"' "$src" -o "/usr/local/libexec-agent-shell-${shell}"; \
+    done; \
+    apt-get purge -y gcc libc6-dev; apt-get autoremove -y; rm -rf /var/lib/apt/lists/*; \
+    cp -a "$(readlink -f /bin/bash)" /bin/bash.real; \
+    cp -a "$(readlink -f /bin/sh)" /bin/sh.real; \
+    install -m 0755 /usr/local/libexec-agent-shell-bash /bin/bash; \
+    install -m 0755 /usr/local/libexec-agent-shell-sh /bin/sh
+
+# Same default user, working directory and command as the baseline image. The
+# harness and the control always pass --user explicitly.
+USER agent
+WORKDIR /workspace
+CMD ["python3", "-m", "trace_lab.relay"]
