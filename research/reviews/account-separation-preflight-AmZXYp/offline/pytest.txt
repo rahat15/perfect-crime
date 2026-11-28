@@ -1,0 +1,34 @@
+................sss..................sss................s............... [ 60%]
+........................sssssssssssssssssssssss                          [100%]
+=========================== short test summary info ============================
+SKIPPED [1] tests/test_account_separation.py:199: needs root to change ownership
+SKIPPED [1] tests/test_account_separation.py:232: needs root to change ownership
+SKIPPED [1] tests/test_account_separation.py:243: needs root to change ownership
+SKIPPED [1] tests/test_account_separation_dispatch.py:183: needs root to drop to test identities
+SKIPPED [1] tests/test_account_separation_dispatch.py:195: needs root to drop to test identities
+SKIPPED [1] tests/test_account_separation_dispatch.py:210: needs root to drop to test identities
+SKIPPED [1] tests/test_account_separation_dispatch.py:422: needs root and a C compiler
+SKIPPED [1] tests/test_account_separation_live.py:154: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:216: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:63: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:207: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:114: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:248: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:180: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:225: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:233: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:241: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:102: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:135: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:147: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:71: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:199: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:159: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:141: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:190: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:79: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:126: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:90: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:167: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+SKIPPED [1] tests/test_account_separation_live.py:259: requires root and a C compiler (mount namespaces, tmpfs, shell stub)
+89 passed, 30 skipped in 34.09s
