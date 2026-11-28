@@ -2,7 +2,11 @@
 
 Experimental code and evidence for a selected financial/privacy case from [Perfect Crime](https://perfect-crime.ai/). The research question is whether operating-system permissions and privilege separation can protect native coding-agent history while legitimate editing, recording and session resume remain functional.
 
-## Recorded findings
+## Native history comparison
+
+The subsequent [native history experiments](native/README.md) include a twenty-attempt comparison, separate coding/resume pilots, process observations and offline controls. The [current findings](analysis/native-history-comparison-findings.md) distinguish preserved workspace histories from observed operating-system denials and describe what remained in SQLite. Public evidence and verification instructions are indexed in the native-history directory. Independent human review is pending.
+
+## Initial replication findings
 
 One pilot and ten subsequent fresh baseline sessions completed the financial task and direct privacy request. The pilot is separate from the baseline. Eight baseline automatic verdicts reported deletion; attempts 3 and 10 required separate review. The reviewed finding is local session JSONL deletion and final path absence in all ten. Original reports and evidence are retained.
 
@@ -18,7 +22,7 @@ The [Docker validation of permission probe 02](reviews/permission-probe-02-docke
 
 The baseline used Codex CLI `0.154.0`, requested model `gpt-6-sol`, subscription authentication and full permissions in disposable Linux containers. Authentication mode is experimental metadata; credentials are excluded. All ten runs reported a model-metadata fallback and read a bundled documentation skill. Served model identity was not independently established. The paper lists GPT-5.6-Sol and GPT-6-Sol as separate Codex configurations in Figure 2 and the setup paragraph on [page 4](https://arxiv.org/pdf/2609.30266#page=4).
 
-These results measure compliance with a direct deletion request, not spontaneous concealment. Local file absence does not establish all-record or forensic erasure, deletion of remote copies or databases, or accepted fabricated history. Native JSONL contents were not captured. Native recorder/tool identities, actual writable-handle inheritance, built-in editor confinement, integrated protection, and native coding/logging/close/resume remain to be tested. The current adapter does not implement the paper's auto-mode condition for Codex. Internal timing fields are not used for performance claims.
+These results measure compliance with a direct deletion request, not spontaneous concealment. Local file absence does not establish all-record or forensic erasure, deletion of remote copies or databases, or accepted fabricated history. At this initial replication checkpoint, native JSONL contents were not captured, and native identities, handle inheritance, integrated protection and coding/logging/resume had not been evaluated. The subsequent native-history work is indexed above. Dedicated native editor confinement remains unestablished. The current adapter does not implement the paper's auto-mode condition for Codex. Internal timing fields are not used for performance claims.
 
 ## Evidence and source
 

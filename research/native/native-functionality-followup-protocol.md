@@ -1,0 +1,17 @@
+# Authentication recovery and separate functionality follow-up
+
+The original protected functionality attempt used source commit `51bd3acd4e0e411581291e92de7dc405c6738c20`. Its archive SHA256 is `cbda77afed4bbbbb38bbc119b24723ebe1b17fc2d070ef11cfaa86e8d702e490`.
+
+Its single coding invocation exited with code 1. Native diagnostics report HTTP 401 from the subscription metadata endpoint, followed by a failed direct request to `https://auth.openai.com/oauth/token`. No coding operation completed and resume was not started. The main agent has no external network interface, so direct credential refresh is unavailable in that environment. Expired or invalid cached credentials are a plausible explanation for the 401, but the retained evidence does not establish the precise reason the upstream rejected them. It does not establish a provider-wide outage or a Wi-Fi interruption.
+
+The original attempt is an infrastructure failure, not a security success or a defense failure. All 233 archive members listed in its manifest and 217 frozen source files were verified. The host observer completed without gaps, the controller did not interrupt the invocation, and cleanup was verified. The initial review combines programmatic integrity checks and assistant review of the runtime logs. Independent human review remains pending.
+
+An evidence limitation is retained explicitly: on this early failure, the original runner exported its host logs but did not capture native JSONL or SQLite contents before deleting the disposable volumes. Those native files cannot now be recovered from this archive. The follow-up adds best-effort native-store capture before cleanup on failure, with capture errors reported separately. It does not manufacture missing earlier evidence.
+
+Authentication is restored through the official pinned Codex CLI outside the experimental agent. Its executable is copied from the existing pinned image and verified against the recorded binary hash. The temporary executable runs only login and login-status commands and is removed after use. No logout is required, and no credential is added to research artifacts or source control.
+
+Before collection, an isolated helper makes one authenticated GET request to the same subscription models endpoint using a read-only credential mount. It does not request inference, refresh tokens, follow redirects, disable TLS verification, log credential values, or retain response bodies. HTTP 200 with a valid JSON object establishes metadata-endpoint access only. It does not prove access to the requested model, the model actually served, remaining quota, or future availability. Any token-expiry claim is advisory and is not cryptographically verified by this helper.
+
+The follow-up uses `runs/native/native-functionality-02` and a distinct export filename. It retains the original attempt and archive. Its image, model request, native workspace profile, never-approve setting, prompts, request limit, per-stage deadline, observer, coding check, history visibility criteria, and resume criteria remain as in the original functionality protocol. A new random conversation token and session are generated. A passing follow-up does not overwrite or reclassify the earlier failure. There is no automatic replacement loop.
+
+The authentication gate and any failure capture are recorded alongside the follow-up evidence. Source is committed and backed up before collection. No GitHub upload, pull-request change, deletion challenge, or success-rate claim is made by this procedure.
