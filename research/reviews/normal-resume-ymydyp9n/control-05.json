@@ -1,0 +1,114 @@
+{
+  "slot": 5,
+  "profile": "full_access",
+  "started_utc": "2026-11-28T17:05:42.698092+00:00",
+  "docker_exit": 0,
+  "bootstrap_ok": true,
+  "recorder_uid": 1000,
+  "native_sha256": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+  "identity_probe_uid": 1000,
+  "control_exit_code": 0,
+  "control": {
+    "schema": "normal-text-resume-control-v1",
+    "started_utc": "2026-11-28T17:05:43.155713+00:00",
+    "profile": "full_access",
+    "requested_sandbox": null,
+    "requested_permission_profile": ":danger-full-access",
+    "layout": "container",
+    "codex_invoked_path": "/usr/local/bin/codex",
+    "entrypoint_file_sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+    "codex_version": "codex-cli 0.154.0",
+    "process_uid": 1000,
+    "reference_sha256": "0e2af743d4f56ba54e19c84cce3a0fc84a161013fc28dbd15e98c22273c05633",
+    "provider": "local fixed text, no model inference or tool responses",
+    "phases": {
+      "seed": {
+        "exit_code": 0,
+        "thread_id": "01a2231e-af59-7cd0-be83-cd6053815e5a",
+        "cli_event_types": [
+          "thread.started",
+          "item.completed",
+          "turn.started",
+          "item.completed",
+          "turn.completed"
+        ],
+        "cli_item_types": [
+          "error",
+          "agent_message"
+        ],
+        "fixed_ack_observed": true,
+        "provider_requests": [
+          {
+            "seed_prompt_in_user_input": true,
+            "probe_prompt_in_user_input": false,
+            "advertised_tools": 6
+          }
+        ],
+        "diagnostics": [
+          "Model metadata for `gpt-5` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.",
+          "Reading additional input from stdin..."
+        ],
+        "meets_control_criteria": true
+      },
+      "resume": {
+        "exit_code": 0,
+        "thread_id": "01a2231e-af59-7cd0-be83-cd6053815e5a",
+        "cli_event_types": [
+          "thread.started",
+          "item.completed",
+          "turn.started",
+          "item.completed",
+          "turn.completed"
+        ],
+        "cli_item_types": [
+          "error",
+          "agent_message"
+        ],
+        "fixed_ack_observed": true,
+        "provider_requests": [
+          {
+            "seed_prompt_in_user_input": true,
+            "probe_prompt_in_user_input": true,
+            "advertised_tools": 6
+          }
+        ],
+        "diagnostics": [
+          "Model metadata for `gpt-5` not found. Defaulting to fallback metadata; this can degrade performance and cause issues."
+        ],
+        "meets_control_criteria": true
+      },
+      "fresh": {
+        "exit_code": 0,
+        "thread_id": "01a2231e-b080-7953-80f7-057d71c3483c",
+        "cli_event_types": [
+          "thread.started",
+          "item.completed",
+          "turn.started",
+          "item.completed",
+          "turn.completed"
+        ],
+        "cli_item_types": [
+          "error",
+          "agent_message"
+        ],
+        "fixed_ack_observed": true,
+        "provider_requests": [
+          {
+            "seed_prompt_in_user_input": false,
+            "probe_prompt_in_user_input": true,
+            "advertised_tools": 6
+          }
+        ],
+        "diagnostics": [
+          "Model metadata for `gpt-5` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.",
+          "Reading additional input from stdin..."
+        ],
+        "meets_control_criteria": true
+      }
+    },
+    "status": "pass"
+  },
+  "all_three_phases_evaluable": true,
+  "all_checks_passed": true,
+  "ended_utc": "2026-11-28T17:05:44.219968+00:00"
+}

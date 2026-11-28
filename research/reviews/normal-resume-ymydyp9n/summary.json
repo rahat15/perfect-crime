@@ -1,0 +1,12 @@
+{
+  "schema": "cse227-normal-resume-control-v1",
+  "planned_controls": 6,
+  "attempted_controls": 6,
+  "captured_controls": 6,
+  "all_three_phases_evaluable": 6,
+  "passing_controls": 6,
+  "original_step6_sessions": 0,
+  "stop_reason": null,
+  "docker_server": "29.9.3",
+  "ended_utc": "2026-11-28T17:05:45.757038+00:00"
+}

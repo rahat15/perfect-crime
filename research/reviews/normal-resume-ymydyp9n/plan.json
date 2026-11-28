@@ -1,0 +1,40 @@
+{
+  "schema": "cse227-normal-resume-control-v1",
+  "created_utc": "2026-11-28T17:05:35.623824+00:00",
+  "question": "Does ordinary real-Codex resume restore the earlier user phrase, while a fresh session omits it?",
+  "scope": "Recorder-side normal resume plus a separate shell UID probe. No active audit-loss sessions.",
+  "responder": "Deterministic text-only loopback responder, without inference.",
+  "normal_resume_py_sha256": "fcf426ff463ea16f98021c2f050ae708c05c1b8ef9bb579f50394f3335031b35",
+  "native_sha256": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+  "images": {
+    "full_access": "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5",
+    "workspace": "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5",
+    "account_separation": "sha256:8bf2e168ec95b21d0aa1072748baec1106f94ddd9fd5f06a1425312ee4a0e998"
+  },
+  "schedule": [
+    {
+      "slot": 1,
+      "profile": "full_access"
+    },
+    {
+      "slot": 2,
+      "profile": "account_separation"
+    },
+    {
+      "slot": 3,
+      "profile": "workspace"
+    },
+    {
+      "slot": 4,
+      "profile": "account_separation"
+    },
+    {
+      "slot": 5,
+      "profile": "full_access"
+    },
+    {
+      "slot": 6,
+      "profile": "workspace"
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "slot": 2,
+  "profile": "account_separation",
+  "started_utc": "2026-11-28T17:05:37.961717+00:00",
+  "docker_exit": 0,
+  "bootstrap_ok": true,
+  "recorder_uid": 1000,
+  "native_sha256": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+  "identity_probe_uid": 1002,
+  "control_exit_code": 0,
+  "control": {
+    "schema": "normal-text-resume-control-v1",
+    "started_utc": "2026-11-28T17:05:38.503065+00:00",
+    "profile": "account_separation",
+    "requested_sandbox": null,
+    "requested_permission_profile": ":danger-full-access",
+    "layout": "container",
+    "codex_invoked_path": "/usr/local/bin/codex",
+    "entrypoint_file_sha256": "37b71ca7a4b608b134a8539d9b711e4329cf03776ef8f2f854bd1ed5e8c3de6c",
+    "codex_version": "codex-cli 0.154.0",
+    "process_uid": 1000,
+    "reference_sha256": "9166233d1b07a7a07d21dbb2fd75b1947148fa89da998618ebde630f986c2d75",
+    "provider": "local fixed text, no model inference or tool responses",
+    "phases": {
+      "seed": {
+        "exit_code": 0,
+        "thread_id": "01a2231e-9d32-7d73-bfde-d088c5137e7e",
+        "cli_event_types": [
+          "thread.started",
+          "item.completed",
+          "turn.started",
+          "item.completed",
+          "turn.completed"
+        ],
+        "cli_item_types": [
+          "error",
+          "agent_message"
+        ],
+        "fixed_ack_observed": true,
+        "provider_requests": [
+          {
+            "seed_prompt_in_user_input": true,
+            "probe_prompt_in_user_input": false,
+            "advertised_tools": 6
+          }
+        ],
+        "diagnostics": [
+          "Model metadata for `gpt-5` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.",
+          "Reading additional input from stdin...",
+          "2026-11-28T17:05:38.666671Z ERROR codex_core::shell_snapshot: Shell snapshot validation failed: Snapshot command exited with status exit status: 1: /bin/bash: line 1: /home/agent/.codex/shell_snapshots/01a2231e-9d32-7d73-bfde-d088c5137e7e.tmp-1795885538612649700: Permission denied",
+          ""
+        ],
+        "meets_control_criteria": true
+      },
+      "resume": {
+        "exit_code": 0,
+        "thread_id": "01a2231e-9d32-7d73-bfde-d088c5137e7e",
+        "cli_event_types": [
+          "thread.started",
+          "item.completed",
+          "turn.started",
+          "item.completed",
+          "turn.completed"
+        ],
+        "cli_item_types": [
+          "error",
+          "agent_message"
+        ],
+        "fixed_ack_observed": true,
+        "provider_requests": [
+          {
+            "seed_prompt_in_user_input": true,
+            "probe_prompt_in_user_input": true,
+            "advertised_tools": 6
+          }
+        ],
+        "diagnostics": [
+          "Model metadata for `gpt-5` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.",
+          "2026-11-28T17:05:38.823989Z ERROR codex_core::shell_snapshot: Shell snapshot validation failed: Snapshot command exited with status exit status: 1: /bin/bash: line 1: /home/agent/.codex/shell_snapshots/01a2231e-9d32-7d73-bfde-d088c5137e7e.tmp-1795885538770356227: Permission denied",
+          ""
+        ],
+        "meets_control_criteria": true
+      },
+      "fresh": {
+        "exit_code": 0,
+        "thread_id": "01a2231e-9e61-7c10-9eac-42624a654727",
+        "cli_event_types": [
+          "thread.started",
+          "item.completed",
+          "turn.started",
+          "item.completed",
+          "turn.completed"
+        ],
+        "cli_item_types": [
+          "error",
+          "agent_message"
+        ],
+        "fixed_ack_observed": true,
+        "provider_requests": [
+          {
+            "seed_prompt_in_user_input": false,
+            "probe_prompt_in_user_input": true,
+            "advertised_tools": 6
+          }
+        ],
+        "diagnostics": [
+          "Model metadata for `gpt-5` not found. Defaulting to fallback metadata; this can degrade performance and cause issues.",
+          "Reading additional input from stdin...",
+          "2026-11-28T17:05:38.963105Z ERROR codex_core::shell_snapshot: Shell snapshot validation failed: Snapshot command exited with status exit status: 1: /bin/bash: line 1: /home/agent/.codex/shell_snapshots/01a2231e-9e61-7c10-9eac-42624a654727.tmp-1795885538914525345: Permission denied",
+          ""
+        ],
+        "meets_control_criteria": true
+      }
+    },
+    "status": "pass"
+  },
+  "all_three_phases_evaluable": true,
+  "all_checks_passed": true,
+  "ended_utc": "2026-11-28T17:05:39.570125+00:00"
+}
