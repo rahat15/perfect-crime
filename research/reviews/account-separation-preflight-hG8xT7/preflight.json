@@ -1,0 +1,43 @@
+{
+  "schema": "account-separation-dispatch-preflight-v1",
+  "checks": {
+    "docker_cli": true,
+    "baseline_image": {
+      "present": true,
+      "id": "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5"
+    },
+    "derived_image": {
+      "present": true,
+      "id": "sha256:8bf2e168ec95b21d0aa1072748baec1106f94ddd9fd5f06a1425312ee4a0e998"
+    },
+    "baseline_codex_sha": {
+      "path": "/usr/local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+      "sha256": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+      "pin": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+      "matches_pin": true
+    },
+    "derived_codex_sha": {
+      "path": "/usr/local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex",
+      "sha256": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+      "pin": "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022",
+      "matches_pin": true
+    },
+    "baseline_launcher_sha": {
+      "path": "/usr/local/bin/codex",
+      "sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+      "pin": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+      "matches_pin": true
+    },
+    "derived_launcher_sha": {
+      "path": "/usr/local/bin/codex.real",
+      "sha256": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+      "pin": "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70",
+      "matches_pin": true
+    },
+    "derived_wrapper_in_place": {
+      "bash_differs_from_real": true,
+      "bash_real_present": true
+    }
+  },
+  "passed": true
+}
