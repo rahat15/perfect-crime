@@ -57,6 +57,12 @@ BASELINE_IMAGE = "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12
 DERIVED_IMAGE = "trace-lab-account-separation:derived"
 CODEX_BINARY = "/usr/local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex"
 CODEX_SHA = "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"
+# /usr/local/bin/codex is NOT the native executable: it is the npm JavaScript launcher
+# that starts CODEX_BINARY.  The two have different hashes and are pinned separately.
+# Launcher value as measured in both images by the first real preflight
+# (research/reviews/account-separation-preflight-AmZXYp/preflight.json).
+CODEX_LAUNCHER_SHA = "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70"
+LAUNCHER_PATH = {"baseline": "/usr/local/bin/codex", "derived": "/usr/local/bin/codex.real"}
 LABEL = "org.trace-lab.account-separation-dispatch"
 PERMISSION = {"full_access": ":danger-full-access", "account_separation": ":danger-full-access",
               "workspace": ":workspace"}
@@ -106,6 +112,7 @@ def freeze_plan(output, mode, sessions_per_profile, geometry, derived_image):
             "images": {"full_access": BASELINE_IMAGE, "workspace": BASELINE_IMAGE,
                        "account_separation": derived_image},
             "codex_binary": CODEX_BINARY, "codex_binary_sha256": CODEX_SHA,
+            "codex_launcher_sha256": CODEX_LAUNCHER_SHA,
             "policy": {"approval_policy": "never", "network": "none / loopback only",
                        "model_calls": 0, "subscription": False, "api_key": False},
             "credit": "loopback-dispatch technique from the teammate's four-session marker study; "
@@ -203,7 +210,8 @@ def fixture_exec_argv(name, profile, geometry, token):
     """The `docker exec -i` argv that feeds the fixture on stdin."""
     binary = "/usr/local/bin/codex.real" if profile == "account_separation" else "/usr/local/bin/codex"
     fixture_args = [profile, "--permission", PERMISSION[profile], "--binary", binary,
-                    "--expect-binary-sha", CODEX_SHA, "--home", "/home/agent",
+                    "--native-binary", CODEX_BINARY, "--expect-binary-sha", CODEX_SHA,
+                    "--expect-launcher-sha", CODEX_LAUNCHER_SHA, "--home", "/home/agent",
                     "--codex-home", "/home/agent/.codex", "--workspace", "/workspace",
                     "--reference-token", token, "--geometry", geometry,
                     "--expect-tool-uid", "1002" if profile == "account_separation" else "1000",
@@ -487,11 +495,16 @@ def preflight(derived_image):
     for key, image in (("baseline_image", BASELINE_IMAGE), ("derived_image", derived_image)):
         found = docker("image", "inspect", "--format", "{{.Id}}", image, check=False)
         report["checks"][key] = {"present": found.returncode == 0, "id": found.stdout.strip()}
-    for key, image, path in (("baseline_codex_sha", BASELINE_IMAGE, "/usr/local/bin/codex"),
-                             ("derived_codex_sha", derived_image, "/usr/local/bin/codex.real")):
+    # Two different files are pinned: the JavaScript launcher on PATH and the native
+    # executable it starts.  Each is compared with its own pin, in both images.
+    for key, image, path, pin in (
+            ("baseline_codex_sha", BASELINE_IMAGE, CODEX_BINARY, CODEX_SHA),
+            ("derived_codex_sha", derived_image, CODEX_BINARY, CODEX_SHA),
+            ("baseline_launcher_sha", BASELINE_IMAGE, LAUNCHER_PATH["baseline"], CODEX_LAUNCHER_SHA),
+            ("derived_launcher_sha", derived_image, LAUNCHER_PATH["derived"], CODEX_LAUNCHER_SHA)):
         proc = docker("run", "--rm", "--entrypoint", "sha256sum", image, path, check=False, timeout=120)
         digest = proc.stdout.split()[0] if proc.returncode == 0 and proc.stdout.split() else None
-        report["checks"][key] = {"path": path, "sha256": digest, "matches_pin": digest == CODEX_SHA}
+        report["checks"][key] = {"path": path, "sha256": digest, "pin": pin, "matches_pin": digest == pin}
     wrapper = docker("run", "--rm", "--entrypoint", "sha256sum", derived_image, "/bin/bash", check=False, timeout=120)
     real = docker("run", "--rm", "--entrypoint", "sha256sum", derived_image, "/bin/bash.real", check=False, timeout=120)
     report["checks"]["derived_wrapper_in_place"] = {
@@ -502,6 +515,8 @@ def preflight(derived_image):
                         and report["checks"]["derived_image"]["present"]
                         and report["checks"]["baseline_codex_sha"]["matches_pin"]
                         and report["checks"]["derived_codex_sha"]["matches_pin"]
+                        and report["checks"]["baseline_launcher_sha"]["matches_pin"]
+                        and report["checks"]["derived_launcher_sha"]["matches_pin"]
                         and report["checks"]["derived_wrapper_in_place"]["bash_differs_from_real"])
     return report
 

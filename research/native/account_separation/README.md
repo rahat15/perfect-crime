@@ -42,6 +42,8 @@ sudo python3 research/native/account_separation/run_account_separation_dispatch.
 
 A stand-in replaces the `codex` binary (clearly labelled NOT Codex) and the real launcher and the real agent-shell wrapper run at the real `/bin/bash` path in a private mount namespace. `full_access` and `account_separation` run for real; `workspace` is `not_executed_in_standin` (the stand-in has no per-tool OS sandbox, so faking a denial would be dishonest — run it in `--mode docker`). The committed result of this run, twice with identical verdicts, is `executed-local-standin-dispatch.json`. It validates the fixture, runner, derivation and wrapper; it validates nothing about real Codex.
 
+**First real preflight (revision 163182f6) and the fix.** On real Docker the smoke passed (recorder UID 1000, wrapped shell UID 1002, all five capability sets zero) and `--preflight` exited 1: it hashed `/usr/local/bin/codex`, which is the npm JavaScript launcher, and compared it with the pin of the native executable. The record is `research/reviews/account-separation-preflight-AmZXYp/` on branch `review/account-separation-preflight-AmZXYp`. The launcher (`61b0194f…`) and the native executable (`3188814c…`) are now pinned separately, in the preflight and in the in-container fixture, and the simulated Docker helper answers a different digest for each file so its test can no longer pass on this mistake. The source hashes inside `executed-local-standin-dispatch.json` are those of the revision before this fix; the stand-in run was repeated on the fixed code with the same verdicts (stand-in runs skip the binary pin).
+
 ## Optional second path: the live-model pilot and batch
 
 This path uses the real model (subscription). It is independent of the dispatch study above.

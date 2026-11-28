@@ -393,6 +393,68 @@ class FakeDockerOrchestration(unittest.TestCase):
         self.assertTrue(report["checks"]["derived_codex_sha"]["matches_pin"])
         self.assertTrue(report["checks"]["derived_wrapper_in_place"]["bash_differs_from_real"])
 
+    def test_preflight_pins_launcher_and_native_separately(self):
+        # Regression for the first real preflight (review account-separation-preflight-AmZXYp):
+        # the launcher on PATH was compared with the native executable's pin.
+        from research.native.account_separation import run_account_separation_dispatch as runner
+        self.assertNotEqual(runner.CODEX_SHA, runner.CODEX_LAUNCHER_SHA)
+        env = fake.install(self.directory)
+        proc = subprocess.run(
+            [sys.executable, "-m", "research.native.account_separation.run_account_separation_dispatch",
+             "--preflight"], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=60)
+        checks = json.loads(proc.stdout)["checks"]
+        for key in ("baseline_codex_sha", "derived_codex_sha"):
+            self.assertEqual(checks[key]["path"], runner.CODEX_BINARY)
+            self.assertEqual(checks[key]["sha256"], runner.CODEX_SHA)
+        self.assertEqual(checks["baseline_launcher_sha"]["path"], "/usr/local/bin/codex")
+        self.assertEqual(checks["derived_launcher_sha"]["path"], "/usr/local/bin/codex.real")
+        for key in ("baseline_launcher_sha", "derived_launcher_sha"):
+            self.assertEqual(checks[key]["sha256"], runner.CODEX_LAUNCHER_SHA)
+            self.assertTrue(checks[key]["matches_pin"])
+
+    def test_preflight_reproduces_recorded_real_digests(self):
+        # The digests the real preflight recorded must now pass their own pins.
+        from research.native.account_separation import run_account_separation_dispatch as runner
+        recorded = "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70"
+        self.assertEqual(runner.CODEX_LAUNCHER_SHA, recorded)
+
+    def test_preflight_fails_on_bad_launcher_sha(self):
+        env = fake.install(self.directory, fault="bad_launcher_sha")
+        proc = subprocess.run(
+            [sys.executable, "-m", "research.native.account_separation.run_account_separation_dispatch",
+             "--preflight"], cwd=str(ROOT), env=env, capture_output=True, text=True, timeout=60)
+        self.assertEqual(proc.returncode, 1)
+        report = json.loads(proc.stdout)
+        self.assertFalse(report["passed"])
+        self.assertTrue(report["checks"]["derived_codex_sha"]["matches_pin"])
+        self.assertFalse(report["checks"]["derived_launcher_sha"]["matches_pin"])
+
+    def test_fixture_exec_argv_passes_both_pins(self):
+        from research.native.account_separation import run_account_separation_dispatch as runner
+        for profile in ("full_access", "account_separation"):
+            argv = runner.fixture_exec_argv("c", profile, "read-only", "tok")
+            self.assertEqual(argv[argv.index("--native-binary") + 1], runner.CODEX_BINARY)
+            self.assertEqual(argv[argv.index("--expect-binary-sha") + 1], runner.CODEX_SHA)
+            self.assertEqual(argv[argv.index("--expect-launcher-sha") + 1], runner.CODEX_LAUNCHER_SHA)
+
+    def test_fixture_hashes_native_and_launcher_as_different_files(self):
+        from research.native.account_separation import dispatch_fixture as fixture
+        import hashlib, argparse
+        native = Path(self.directory) / "native"; native.write_bytes(b"native")
+        launcher = Path(self.directory) / "launcher"; launcher.write_bytes(b"launcher")
+        def attempt(expect_native, expect_launcher):
+            args = argparse.Namespace(reference_token="t", standin=False, profile="full_access",
+                                      geometry="read-only", binary=str(launcher), native_binary=str(native),
+                                      expect_binary_sha=expect_native, expect_launcher_sha=expect_launcher)
+            try:
+                return fixture.run(args)
+            except AttributeError:
+                return None  # got past both hash gates and needed the rest of the arguments
+        good_n = hashlib.sha256(b"native").hexdigest(); good_l = hashlib.sha256(b"launcher").hexdigest()
+        self.assertIn("binary sha256 mismatch", attempt(good_l, good_l)["errors"])
+        self.assertIn("launcher sha256 mismatch", attempt(good_n, good_n)["errors"])
+        self.assertIsNone(attempt(good_n, good_l))
+
     def test_preflight_fails_on_bad_binary_sha(self):
         env = fake.install(self.directory, fault="bad_sha")
         proc = subprocess.run(

@@ -491,11 +491,29 @@ def run(args):
               "errors": [], "binary": str(args.binary)}
 
     if not args.standin:
-        actual = binary_hash(args.binary)
+        # --binary is what gets executed (the launcher on PATH); the pinned native
+        # executable is a different file.  Each is hashed and compared with its own pin.
+        native = args.native_binary or args.binary
+        result["native_binary"] = str(native)
+        try:
+            actual = binary_hash(native)
+        except OSError as error:
+            result["errors"].append("native binary unreadable: %s" % error.strerror)
+            return result
         result["binary_sha256"] = actual
         if args.expect_binary_sha and actual != args.expect_binary_sha:
             result["errors"].append("binary sha256 mismatch")
             return result
+        if args.native_binary:
+            try:
+                launcher = binary_hash(args.binary)
+            except OSError as error:
+                result["errors"].append("launcher unreadable: %s" % error.strerror)
+                return result
+            result["launcher_sha256"] = launcher
+            if args.expect_launcher_sha and launcher != args.expect_launcher_sha:
+                result["errors"].append("launcher sha256 mismatch")
+                return result
 
     sessions_dir = os.path.join(args.codex_home, "sessions")
     os.makedirs(sessions_dir, exist_ok=True)
@@ -655,7 +673,12 @@ def main(argv=None):
     parser.add_argument("--permission", required=True,
                         help="default_permissions value, e.g. :danger-full-access or :workspace")
     parser.add_argument("--binary", default="/usr/local/bin/codex")
-    parser.add_argument("--expect-binary-sha", default=None)
+    parser.add_argument("--expect-binary-sha", default=None,
+                        help="Pin for the native executable (--native-binary, else --binary).")
+    parser.add_argument("--native-binary", default=None,
+                        help="Native executable the launcher starts, when --binary is a launcher.")
+    parser.add_argument("--expect-launcher-sha", default=None,
+                        help="Pin for --binary when --native-binary is given.")
     parser.add_argument("--home", required=True)
     parser.add_argument("--codex-home", required=True)
     parser.add_argument("--workspace", required=True)

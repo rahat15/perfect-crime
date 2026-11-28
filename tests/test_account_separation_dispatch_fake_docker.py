@@ -24,6 +24,11 @@ IMAGE_IDS = {"sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e124921
              "sha256:eddc3b1939fb346372fe8e6aa2806f1bb03696867704f3e70143e12492115aa5",
              "trace-lab-account-separation:derived": "sha256:" + "d" * 64}
 PIN = "3188814c35471432d4123203e0eb38e5bddc60226e3d7ddf0e59e649ea140022"
+# As in the real images, the launcher on PATH and the native executable are different
+# files with different digests.  The first real preflight failed because this helper
+# used to answer the native pin for the launcher path.
+LAUNCHER_PIN = "61b0194f3bb6534439c8d26a3ed57d0805f84b884588b761795323eeb92fcf70"
+NATIVE = "/usr/local/lib/node_modules/@openai/codex/node_modules/@openai/codex-linux-x64/vendor/x86_64-unknown-linux-musl/bin/codex"
 ARITY = {"--name", "--label", "--user", "--cap-add", "--cap-drop", "--security-opt", "--network",
          "--mount", "--tmpfs", "--pids-limit", "--memory", "--cpus", "--env", "--workdir",
          "--entrypoint", "--format", "--filter"}
@@ -112,8 +117,12 @@ def main():
                 path = tail[-1]
                 if "bad_sha" in FAULT:
                     print("0000 " + path)
-                elif path.endswith(".real") or path == "/usr/local/bin/codex":
+                elif "bad_launcher_sha" in FAULT and path in ("/usr/local/bin/codex", "/usr/local/bin/codex.real"):
+                    print("1111 " + path)
+                elif path == NATIVE:
                     print(PIN + "  " + path)
+                elif path in ("/usr/local/bin/codex", "/usr/local/bin/codex.real"):
+                    print(LAUNCHER_PIN + "  " + path)
                 elif path == "/bin/bash":
                     print("aaaa  /bin/bash")
                 else:
